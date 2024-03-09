@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ course.title }} - Course Details</title>
+    <style>
+        .pdf-list {
+            list-style: none;
+            padding: 0;
+        }
+        .pdf-item {
+            margin-bottom: 10px;
+        }
+        .pdf-link {
+            text-decoration: none;
+            color: #333;
+        }
+        .pdf-icon {
+            width: 20px;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ course.title }}</h1>
+    <h2>Available Scripts</h2>
+    <p>
+    <ul class="pdf-list">
+        {% for pdf in pdfs %}
+            <li class="pdf-item">
+                <a href="{{ url_for('pdf_details', pdf_id=pdf.id) }}" class="pdf-link">
+                    <img src="{{ url_for('static', filename='pdf.png') }}" alt="PDF Icon" class="pdf-icon">
+                    {{ pdf.title }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

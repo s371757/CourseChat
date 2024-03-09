@@ -1,0 +1,17 @@
+flask
+Flask-SQLAlchemy
+Flask-Login
+Flask-Migrate
+Flask-WTF
+Flask-Bcrypt
+Flask-Mail
+PyMuPDF
+numpy
+#scikit-learn
+tensorflow
+tensorflow_hub
+openai
+litellm
+sentencepiece
+nbformat
+requests
