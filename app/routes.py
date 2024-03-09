@@ -1,12 +1,14 @@
 # routes.py
 from flask import Blueprint, render_template, request, flash, redirect, url_for, Response, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
-from app import db, Course, User, Pdf, ChatEntry  
-from app.forms import LoginForm 
-from app.utils import allowed_file, check_password_hash, secure_filename
 from tempfile import NamedTemporaryFile
 import os
-from api import generate_answer, ask_file, load_openai_key, load_recommender
+
+from .forms import LoginForm 
+from .utils import allowed_file, check_password_hash
+from .api import generate_answer, ask_file, load_openai_key, load_recommender
+from .models import User, Course, Pdf, ChatEntry    
+from . import db
 
 main = Blueprint('main', __name__)
 

@@ -10,7 +10,6 @@ import numpy as np
 import openai
 import tensorflow_hub as hub
 from fastapi import UploadFile
-from lcserve import serving
 from sklearn.neighbors import NearestNeighbors
 from dotenv import load_dotenv
 
@@ -155,9 +154,11 @@ def generate_answer(question, openai_key):
 def load_openai_key() -> str:
     key = os.environ.get("OPENAI_API_KEY")
     if key is None:
-        raise ValueError(
-            "[ERROR]: Please pass your OPENAI_API_KEY. Get your key here : https://platform.openai.com/account/api-keys"
-        )
+        key = os.environ.get("OPENAI_API_KEY")
+        if key is None:
+            raise ValueError(
+                "[ERROR]:  OPENAI_API_KEY"
+            )
     return key
 
 

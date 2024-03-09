@@ -7,11 +7,8 @@ Flask-Bcrypt
 Flask-Mail
 PyMuPDF
 numpy
-#scikit-learn
+scikit-learn
 tensorflow
 tensorflow_hub
 openai
 litellm
-sentencepiece
-nbformat
-requests
