@@ -1,16 +1,25 @@
 console.log("Script loaded");
 
-function toggleFullscreen(elementId) {
-    const pdfContainer = document.querySelector('.pdf-container');
-    const chatContainer = document.querySelector('.chat-container');
-    if (elementId === 'pdf') {
-        pdfContainer.classList.toggle('fullscreen');
-        chatContainer.style.display = pdfContainer.classList.contains('fullscreen') ? 'none' : 'block';
-    } else if (elementId === 'chat') {
-        chatContainer.classList.toggle('fullscreen');
-        pdfContainer.style.display = chatContainer.classList.contains('fullscreen') ? 'none' : 'block';
+// Function to toggle fullscreen mode for either PDF viewer or chat interface
+function toggleFullscreen(type) {
+    if (type === 'pdf') {
+        isPdfFullscreen = !isPdfFullscreen;
+        document.getElementById('viewerContainer').classList.toggle('fullScreen', isPdfFullscreen);
+    } else if (type === 'chat') {
+        isChatFullscreen = !isChatFullscreen;
+        document.getElementById('chatContainer').classList.toggle('fullScreen', isChatFullscreen);
     }
-    console.log('toggleFullscreen');
+}
+
+// Function to toggle between PDF viewer and chat interface
+function toggleView(view) {
+    if (view === 'pdf') {
+        document.getElementById('viewerContainer').style.display = 'block';
+        document.getElementById('chatContainer').style.display = 'none';
+    } else if (view === 'chat') {
+        document.getElementById('viewerContainer').style.display = 'none';
+        document.getElementById('chatContainer').style.display = 'block';
+    }
 }
 
 function init_pdf_viewer() {
@@ -39,3 +48,4 @@ function init_pdf_viewer() {
         });
     });
 }
+

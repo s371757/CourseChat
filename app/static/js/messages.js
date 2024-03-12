@@ -1,6 +1,3 @@
-import { getAnswer } from 'chatGPT.js';
-import { getQuestion } from 'chatGPT.js';
-
 const dummyQuestion = 'Dummy question';
 const dummyAnswer = 'Dummy answer';
 
@@ -51,7 +48,7 @@ function handleChatFormSubmit(event) {
         formData.append('url', yourUrl);
         formData.append('pageNumber', pageNumber);
 
-         fetch('/ask_url', { // or '/ask_file' if you're sending a file
+         fetch('/ask_file', { // or '/ask_file' if you're sending a file
              method: 'POST',
              body: formData
          })

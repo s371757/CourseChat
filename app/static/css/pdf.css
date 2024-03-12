@@ -1,80 +1,24 @@
 body {
-    margin: 0;
-    padding: 0;
     display: flex;
+    flex-direction: row;
     height: 100vh;
-    font-family: Arial, sans-serif;
-}
-.pdf-container, .chat-container {
-    width: 50%;
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-}
-.fullscreen {
-    width: 100%;
-    height: 100%;
-}
-.button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 10;
-    padding: 5px 10px;
-    border: none;
-    border-radius: 50%;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-}
-.chat-container {
-    background-color: #f8f9fa;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-}
-.chat-messages {
-    flex-grow: 1;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    margin-bottom: 10px;
-    padding: 10px;
-    background-color: white;
-    border-radius: 5px;
-}
-.message {
-    margin-bottom: 10px;
-    padding: 10px;
-    background-color: #e9ecef;
-    border-radius: 5px;
-}
-#chat-form {
-    display: flex;
-    margin-top: 10px;
-}
-#message-input {
-    flex-grow: 1;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    margin-right: 10px;
-}
-#chat-form button {
-    padding: 10px 20px;
-    border: none;
-    background-color: #28a745;
-    color: white;
-    border-radius: 5px;
-    cursor: pointer;
+    margin: 0;
 }
 
-#pdf-viewer-container {
-    width: 100%;
-    height: 500px; /* Adjust as needed */
-    overflow-y: scroll;
+#viewerContainer, #chatContainer {
+    flex: 1;
+    overflow: auto;
 }
 
-embed {
+#viewerContainer {
+    border-right: 1px solid #ccc;
+}
+
+.fullScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
+    z-index: 9999;
 }

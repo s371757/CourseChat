@@ -1,156 +1,14 @@
 import os
-import re
-import shutil
-import urllib.request
-from pathlib import Path
-from tempfile import NamedTemporaryFile
-from litellm import completion
-import fitz
-import numpy as np
-import openai
-import tensorflow_hub as hub
-from fastapi import UploadFile
-from sklearn.neighbors import NearestNeighbors
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
-
-recommender = None
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+import logging
+import sys
+import chromadb
+from llama_index.core import VectorStoreIndex
+from llama_index.vector_stores.chroma import ChromaVectorStore
+from llama_index.core import StorageContext
 
 
-def download_pdf(url, output_path):
-    urllib.request.urlretrieve(url, output_path)
-
-
-def preprocess(text):
-    text = text.replace('\n', ' ')
-    text = re.sub('\s+', ' ', text)
-    return text
-
-
-def pdf_to_text(path, start_page=1, end_page=None):
-    doc = fitz.open(path)
-    total_pages = doc.page_count
-
-    if end_page is None:
-        end_page = total_pages
-
-    text_list = []
-
-    for i in range(start_page - 1, end_page):
-        text = doc.load_page(i).get_text("text")
-        text = preprocess(text)
-        text_list.append(text)
-
-    doc.close()
-    return text_list
-
-
-def text_to_chunks(texts, word_length=150, start_page=1):
-    text_toks = [t.split(' ') for t in texts]
-    chunks = []
-
-    for idx, words in enumerate(text_toks):
-        for i in range(0, len(words), word_length):
-            chunk = words[i : i + word_length]
-            if (
-                (i + word_length) > len(words)
-                and (len(chunk) < word_length)
-                and (len(text_toks) != (idx + 1))
-            ):
-                text_toks[idx + 1] = chunk + text_toks[idx + 1]
-                continue
-            chunk = ' '.join(chunk).strip()
-            chunk = f'[Page no. {idx+start_page}]' + ' ' + '"' + chunk + '"'
-            chunks.append(chunk)
-    return chunks
-
-
-class SemanticSearch:
-    def __init__(self):
-        self.use = hub.load('https://tfhub.dev/google/universal-sentence-encoder/4')
-        self.fitted = False
-
-    def fit(self, data, batch=1000, n_neighbors=5):
-        self.data = data
-        self.embeddings = self.get_text_embedding(data, batch=batch)
-        n_neighbors = min(n_neighbors, len(self.embeddings))
-        self.nn = NearestNeighbors(n_neighbors=n_neighbors)
-        self.nn.fit(self.embeddings)
-        self.fitted = True
-
-    def __call__(self, text, return_data=True):
-        inp_emb = self.use([text])
-        neighbors = self.nn.kneighbors(inp_emb, return_distance=False)[0]
-
-        if return_data:
-            return [self.data[i] for i in neighbors]
-        else:
-            return neighbors
-
-    def get_text_embedding(self, texts, batch=1000):
-        embeddings = []
-        for i in range(0, len(texts), batch):
-            text_batch = texts[i : (i + batch)]
-            emb_batch = self.use(text_batch)
-            embeddings.append(emb_batch)
-        embeddings = np.vstack(embeddings)
-        return embeddings
-
-
-def load_recommender(path, start_page=1):
-    global recommender
-    if recommender is None:
-        recommender = SemanticSearch()
-
-    texts = pdf_to_text(path, start_page=start_page)
-    chunks = text_to_chunks(texts, start_page=start_page)
-    recommender.fit(chunks)
-    return 'Corpus Loaded.'
-
-
-def generate_text(openai_key, prompt, engine="text-davinci-003"):
-    try:
-        messages=[{ "content": prompt,"role": "user"}]
-        completions = completion(
-            model=engine,
-            messages=messages,
-            max_tokens=512,
-            n=1,
-            stop=None,
-            temperature=0.7,
-            api_key=openai_key
-        )
-        message = completions['choices'][0]['message']['content']
-    except Exception as e:
-        message = f'API Error: {str(e)}'
-    return message 
-
-
-def generate_answer(question, openai_key):
-    topn_chunks = recommender(question)
-    prompt = ""
-    prompt += 'search results:\n\n'
-    for c in topn_chunks:
-        prompt += c + '\n\n'
-
-    prompt += (
-        "Instructions: Compose a comprehensive reply to the query using the search results given. "
-        "Cite each reference using [ Page Number] notation (every result has this number at the beginning). "
-        "Citation should be done at the end of each sentence. If the search results mention multiple subjects "
-        "with the same name, create separate answers for each. Only include information found in the results and "
-        "don't add any additional information. Make sure the answer is correct and don't output false content. "
-        "If the text does not relate to the query, simply state 'Text Not Found in PDF'. Ignore outlier "
-        "search results which has nothing to do with the question. Only answer what is asked. The "
-        "answer should be short and concise. Answer step-by-step. \n\nQuery: {question}\nAnswer: "
-    )
-
-    prompt += f"Query: {question}\nAnswer:"
-    answer = generate_text(openai_key, prompt, "text-davinci-003")
-    return answer
-
-
+#TODO: Add the OpenAI API key to the environment variables depending on the course ID 
 def load_openai_key() -> str:
     key = os.environ.get("OPENAI_API_KEY")
     if key is None:
@@ -162,18 +20,83 @@ def load_openai_key() -> str:
     return key
 
 
-def ask_url(url: str, question: str):
-    download_pdf(url, 'corpus.pdf')
-    load_recommender('corpus.pdf')
-    openai_key = load_openai_key()
-    return generate_answer(question, openai_key)
+def ask_course(course_id: str, question: str):
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+    logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
+    index = load_index(course_id)
+    query_engine = index.as_query_engine()
+    response = query_engine.query(question)
+    print(response)
+    return response
 
-def ask_file(file: UploadFile, question: str) -> str:
-    suffix = Path(file.filename).suffix
-    with NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        shutil.copyfileobj(file.file, tmp)
-        tmp_path = Path(tmp.name)
+def ask_file(pdf_id: str, question: str) -> str:
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+    logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
+    index = load_index(pdf_id)
+    query_engine = index.as_query_engine()
+    response = query_engine.query(question)
+    print(response)
+    return response
 
-    load_recommender(str(tmp_path))
-    openai_key = load_openai_key()
-    return generate_answer(question, openai_key)
+def load_index(id: str) -> VectorStoreIndex:
+    # initialize client
+    db = chromadb.PersistentClient(path="./chroma_db")
+
+    # get collection
+    chroma_collection = db.get_or_create_collection(id)
+
+    # assign chroma as the vector_store to the context
+    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+    storage_context = StorageContext.from_defaults(vector_store=vector_store)
+
+    # load your index from stored vectors
+    index = VectorStoreIndex.from_vector_store(
+        vector_store, storage_context=storage_context
+    )
+    return index
+
+def add_pdf(course_id: str, pdf_id: str):
+    if was_initialized(course_id):
+        add_to_index(course_id, pdf_id)
+    else:
+        create_index(course_id, pdf_id)
+
+def was_initialized(course_id: str) -> bool:
+    conn = sqlite3.connect(database_path)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM Pdf WHERE course_id = ?", (course_id,))
+    pdf_ids = cursor.fetchall()
+
+    # Check if any PDFs were found
+    if pdf_ids:
+        print(f"There are {len(pdf_ids)} PDF(s) associated with course ID {course_id}.")
+        return True
+    else:
+        print(f"No PDFs are associated with course ID {course_id}.")
+        return False# Replace this with your implementation
+
+def create_index(course_id: str):
+    documents = SimpleDirectoryReader("./data").load_data()
+
+    # initialize client, setting path to save data
+    db = chromadb.PersistentClient(path="./chroma_db")
+
+    # create collection
+    chroma_collection = db.get_or_create_collection(course_id)
+
+    # assign chroma as the vector_store to the context
+    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+    storage_context = StorageContext.from_defaults(vector_store=vector_store)
+
+    # create your index
+    index = VectorStoreIndex.from_documents(
+        documents, storage_context=storage_context
+    )
+    return index
+
+
+def add_to_index(course_id: str):
+    document = SimpleDirectoryReader("./data").load_data()
+    index = load_index(course_id)
+    index.insert(document)
+

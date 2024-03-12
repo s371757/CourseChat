@@ -1,7 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
-from app import app
-db = SQLAlchemy(app)
-
+from . import db
+from werkzeug.security import generate_password_hash, check_password_hash
 
 #Database models
 class University(db.Model):
@@ -14,7 +13,7 @@ class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     university_id = db.Column(db.Integer, db.ForeignKey('university.id'), nullable=False)
-    pdfs = db.relationship('PDF', backref='course', lazy=True)
+    pdfs = db.relationship('Pdf', backref='course', lazy=True)
 
 
 class Pdf(db.Model):
@@ -31,3 +30,15 @@ class ChatEntry(db.Model):
     page_number = db.Column(db.Integer)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     pdf_id = db.Column(db.Integer, db.ForeignKey('pdf.id'), nullable=False)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    university_id = db.Column(db.Integer, db.ForeignKey('university.id'))  # Ensure this matches the University table name
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)

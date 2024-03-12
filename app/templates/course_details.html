@@ -30,8 +30,8 @@
     <ul class="pdf-list">
         {% for pdf in pdfs %}
             <li class="pdf-item">
-                <a href="{{ url_for('pdf_details', pdf_id=pdf.id) }}" class="pdf-link">
-                    <img src="{{ url_for('static', filename='pdf.png') }}" alt="PDF Icon" class="pdf-icon">
+                <a href="{{ url_for('main.pdf_details', pdf_id=pdf.id) }}" class="pdf-link">
+                    <img src="{{ url_for('static', filename='images/pdf.png') }}" alt="PDF Icon" class="pdf-icon">
                     {{ pdf.title }}
                 </a>
             </li>

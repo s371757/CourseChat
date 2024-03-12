@@ -15,13 +15,13 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="#">Admin Page</a>
         <div class="navbar-nav ml-auto">
-            <a class="nav-item nav-link" href="{{ url_for('logout') }}">Logout</a>
+            <a class="nav-item nav-link" href="{{ url_for('main.logout') }}">Logout</a>
         </div>
     </nav>
 
     <div class="container mt-5">
         <h1 class="mb-4">Add a Course</h1>
-        <form action="{{ url_for('add_course') }}" method="post">
+        <form action="{{ url_for('main.add_course') }}" method="post">
             <div class="form-group">
                 <label for="title">Course Title</label>
                 <input type="text" class="form-control" id="title" name="title" required>
@@ -30,7 +30,7 @@
         </form>
 
         <h2 class="mt-4">Upload PDF to Course</h2>
-        <form action="{{ url_for('upload_pdf') }}" method="post" enctype="multipart/form-data">
+        <form action="{{ url_for('main.upload_pdf') }}" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="course">Select a Course</label>
                 <select class="form-control" id="course" name="course">

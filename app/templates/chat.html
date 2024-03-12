@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interface</title>
+    <link rel="icon" href="/static/images/favicon.ico">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Add your custom CSS styles here */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="card">
+                    <div class="card-body">
+                        <div id="chat-messages" class="mb-3"></div>
+                        <form id="chat-form">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="message-input" placeholder="Type your message...">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-primary" id="send-button">Send</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Function to send a message and get the answer
+        function sendMessage() {
+            console.log("Sending message...");
+            var messageInput = document.getElementById("message-input");
+            var message = messageInput.value.trim();
+    
+            if (message !== "") {
+                // Make an AJAX request to your server
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/get_answer", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        displayMessage(message, response.answer);
+                    }
+                };
+                var pdf_id = 1;//TODO get pdf id from url
+                var course_id = 1;//TODO get course id from url, implement course_id
+                xhr.send(JSON.stringify({ question: message, pdf_id: pdf_id, course_id: course_id}));
+    
+                // Clear the input field
+                messageInput.value = "";
+            }
+        }
+    
+        // Function to display a message in the chat interface
+        function displayMessage(question, answer) {
+            console.log("Question: " + question);
+            console.log("Answer: " + answer);
+
+            // Create a new div element
+            var chatMessages = document.getElementById("chat-messages");
+            var questionElement = document.createElement("div");
+            questionElement.textContent = question;
+            chatMessages.appendChild(questionElement);
+    
+            var answerElement = document.createElement("div");
+            answerElement.textContent = answer;
+            chatMessages.appendChild(answerElement);
+        }
+    
+        var sendButton = document.getElementById("send-button");
+        sendButton.addEventListener("click", function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            console.log("Send pressed");
+            sendMessage();
+        });
+
+        // TODO fix event listener for the enter key
+        // Event listener for the enter key
+        var messageInput = document.getElementById("message-input");
+        messageInput.addEventListener("keydown", function(event) {
+            if (event.key == "Enter") {
+                console.log("Enter key pressed");
+                sendMessage();
+            }
+        });
+    </script>
+    
+</body>
+</html>
