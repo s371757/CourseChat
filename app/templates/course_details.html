@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ course.title }} - Course Details</title>
+    <link rel="icon" href="/static/images/favicon.ico">
     <style>
         .pdf-list {
             list-style: none;
@@ -26,16 +27,19 @@
 <body>
     <h1>{{ course.title }}</h1>
     <h2>Available Scripts</h2>
-    <p>
-    <ul class="pdf-list">
-        {% for pdf in pdfs %}
-            <li class="pdf-item">
-                <a href="{{ url_for('main.pdf_details', pdf_id=pdf.id) }}" class="pdf-link">
-                    <img src="{{ url_for('static', filename='images/pdf.png') }}" alt="PDF Icon" class="pdf-icon">
-                    {{ pdf.title }}
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
+    {% if pdfs %}
+        <ul class="pdf-list">
+            {% for pdf in pdfs %}
+                <li class="pdf-item">
+                    <a href="{{ url_for('main.pdf_details', pdf_id=pdf.id) }}" class="pdf-link">
+                        <img src="{{ url_for('static', filename='images/pdf.png') }}" alt="PDF Icon" class="pdf-icon">
+                        {{ pdf.title }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No PDFs available yet.</p>
+    {% endif %}
 </body>
 </html>

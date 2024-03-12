@@ -1,5 +1,5 @@
 # routes.py
-from flask import Blueprint, render_template, request, flash, redirect, url_for, Response, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, Response, jsonify, session
 from flask_login import login_user, logout_user, login_required, current_user
 
 from .forms import LoginForm 
@@ -7,6 +7,7 @@ from .utils import allowed_file, check_password_hash, load_pdf_to_data
 from .api import ask_file, ask_course, add_pdf_index
 from .models import User, Course, Pdf, ChatEntry , University   
 from . import db
+import base64
 
 main = Blueprint('main', __name__)
 
@@ -38,12 +39,12 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
-        if user is not None and not check_password_hash(user.password, form.password.data):
+        if user is not None and not check_password_hash(user.password_hash, form.password.data):
             flash('Invalid username or password.')
             print("Invalid password")
             return redirect(url_for('main.login'))
-        if user is not None and check_password_hash(user.password, form.password.data):
-            login_user(user)
+        if user is not None and check_password_hash(user.password_hash, form.password.data):
+            session['user_id'] = user.id
             flash('Logged in successfully.')
             if user == "admin" and user.password == "admin":
                 print("Super Admin")
@@ -57,19 +58,37 @@ def login():
 
 @main.route('/logout')
 #@login_required
-def logout():
+def logout():#TODO
     logout_user()
     return redirect(url_for('main.index'))
 
 @main.route('/admin')
 #@login_required
 def admin():
+    user_id = session.get('user_id')
+    if user_id is None:
+        return "Not logged in", 401
+    user = User.query.get(user_id)
+    if user is None:
+        return "User not found", 404
+    if user_id == 2:
+        universities = University.query.all()
+        courses = Course.query.all()
+        return render_template('superadmin.html', universities=universities, courses = courses)
     courses = Course.query.all()
     return render_template('admin.html', courses=courses)
 
 @main.route('/superadmin')
 #@login_required
 def superadmin():
+    user_id = session.get('user_id')
+    #if user_id is None:
+    #    return "Not logged in", 401
+    #user = User.query.get(user_id)
+    #if user is None:
+    #    return "User not found", 404
+    #if user_id != 2:
+    #    return "Not authorized", 403
     universities = University.query.all()
     courses = Course.query.all()
     return render_template('superadmin.html', universities=universities, courses = courses)
@@ -103,15 +122,38 @@ def add_user():
 @main.route('/add_course', methods=['POST'])
 #@login_required
 def add_course():
+    user_id = session.get('user_id')
+    if user_id is None:
+        return "Not logged in", 401
+    user = User.query.get(user_id)
+    if user is None:
+        return "User not found", 404
     title = request.form.get('title')
-    if current_user is not None:
-        university_id = 1 #current_user.university_id
-    else: print("Not logged in")
-    new_course = Course(title=title, university_id=university_id)
+    password_hash = request.form.get('course_password')
+    api_key = request.form.get('api_key')
+    university_id = user.university_id
+    new_course = Course(title=title, university_id=university_id, password_hash=password_hash, api_key=api_key, user_id=user_id)
     db.session.add(new_course)
     db.session.commit()
     return redirect(url_for('main.admin'))
 
+@main.route('/delete_course', methods=['POST'])
+#@login_required
+def delete_course():
+    user_id = session.get('user_id')
+    if user_id is None:
+        return "Not logged in", 401
+    user = User.query.get(user_id)
+    if user is None:
+        return "User not found", 404
+    course_id = request.form['course_del'] 
+    course = Course.query.get(course_id)
+    if course:
+        db.session.query(Pdf).filter_by(course_id=course_id).delete()
+        db.session.delete(course)
+        db.session.commit()
+        #TODO add cleanup for index 
+    return redirect(url_for('main.admin'))
 
 @main.route('/upload_pdf', methods=['POST'])
 # @login_required
@@ -129,7 +171,7 @@ def upload_pdf():
         if file and allowed_file(file.filename):
             pdf_data = file.read()
             course_id = request.form['course']  
-            add_pdf_index(course_id, pdf_data)
+            #add_pdf_index(course_id, pdf_data)
             new_pdf = Pdf(title=file.filename, data=pdf_data, course_id=course_id)
             db.session.add(new_pdf)
             db.session.commit()
@@ -155,13 +197,9 @@ def course_details(course_id):
 @main.route('/pdf/<int:pdf_id>')#TODO also add course_id
 def pdf_details(pdf_id):
     pdf = Pdf.query.get_or_404(pdf_id)
+    pdf_data_base64 = base64.b64encode(pdf.data).decode('utf-8')
     entries = ChatEntry.query.filter_by(pdf_id=pdf_id).all()
-    return render_template('pdf_details.html', pdf=pdf, entries=entries)
-
-@main.route('/serve_pdf/<int:pdf_id>')
-def serve_pdf(pdf_id):
-    pdf = Pdf.query.get_or_404(pdf_id)
-    return Response(pdf.data, mimetype='application/pdf')
+    return render_template('pdf_details.html', pdf_title = pdf.title, pdf_data_base64=pdf_data_base64, entries=entries)
 
 
 @main.route('/log_chat_entry', methods=['POST'])
@@ -196,18 +234,20 @@ def get_answer():
         question = data.get('question')
         pdf_id = data.get('pdf_id')
         course_id = data.get('course_id')
+        user_id = session.get('user_id')
         print(f"Question: {question}")
         print(f"PDF ID: {pdf_id}")
         print(f"Course ID: {course_id}")
         # Get the answer
-        answer = ask_course(course_id, question)
-        #answer = get_static_answer()
+        #answer = ask_course(course_id, question)
+        answer = get_static_answer()
 
         #TODO implement logging
         #TODO add page numbers
-        new_entry = ChatEntry(question=question, answer=answer, page_number=1, pdf_id=pdf_id, user_id=current_user.id)
+        new_entry = ChatEntry(question=question, answer=answer, page_number=1, pdf_id=pdf_id)
         db.session.add(new_entry)
         db.session.commit()
+        print("ChatEntry logged succesfully")
         return jsonify({'answer': answer})
     except Exception as e:
         print(f"Error in get_answer: {e}")

@@ -4,7 +4,7 @@ def allowed_file(filename):
     return filename.lower().endswith('.pdf')
 
 def check_password_hash(hashed_password, password):
-    return True
+    return hashed_password == password
 
 def load_pdf_to_data(pdf_data: bytes):
     print("[INFO]: Loading PDF to data")

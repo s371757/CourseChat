@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>Admin Page</title>
+    <link rel="icon" href="/static/images/favicon.ico">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <!-- Bootstrap JS and jQuery (necessary for Bootstrap's JavaScript plugins) -->
@@ -20,7 +21,7 @@
     </nav>
 
     <div class="container mt-5">
-        <h1 class="mb-4">Add a University</h1>
+        <h2 class="mb-4">Add a University</h2>
         <form action="{{ url_for('main.add_university') }}" method="post">
             <div class="form-group">
                 <label for="university_name">University Name:</label>
@@ -28,7 +29,7 @@
             </div>
             <button type="submit" class="btn btn-primary">Add University</button>
         </form>
-
+        <br/>
         <h2 class="mt-4">Add a User</h2>
         <form action="{{ url_for('main.add_user') }}" method="post" enctype="multipart/form-data">
             <div class="form-group">
@@ -48,17 +49,22 @@
             <button type="submit" class="btn btn-primary">Add User</button>
         </form>
     </div>
-
+    <br/>
     <div class="container mt-5">
-        <h1 class="mb-4">Add a Course</h1>
+        <h2 class="mb-4">Add a Course</h2>
         <form action="{{ url_for('main.add_course') }}" method="post">
             <div class="form-group">
                 <label for="title">Course Title</label>
                 <input type="text" class="form-control" id="title" name="title" required>
+                <br/>
+                <label for="api_key">API Key:</label>
+                <input type="text" id="api_key" name="api_key" required>
+                <label for="course_password">Password:</label>
+                <input type="password" id="course_password" name="course_password" required>
             </div>
             <button type="submit" class="btn btn-primary">Add Course</button>
         </form>
-
+        <br/>
         <h2 class="mt-4">Upload PDF to Course</h2>
         <form action="{{ url_for('main.upload_pdf') }}" method="post" enctype="multipart/form-data">
             <div class="form-group">

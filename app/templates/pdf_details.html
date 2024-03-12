@@ -2,68 +2,175 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ pdf.title }}</title>
+    <title>PDF Viewer</title>
+    <link rel="icon" href="/static/images/favicon.ico">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chatjs/dist/chatjs.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='pdf.css') }}">
-
-</head>     
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #pdf-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            overflow: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-container {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 49%;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f1f1f1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* Ensure chat input is at the bottom */
+        }
+        .chat-messages {
+            overflow-y: auto;
+        }
+        canvas {
+            width: 100% !important;
+            height: auto !important;
+        }
+    </style>
+</head>
 <body>
-    <div id="viewerContainer">
-        <button class="button" onclick="toggleFullscreen('pdf')">&#x26F6; Fullscreen</button>
-        <button class="button" onclick="toggleView('chat')">Switch to Chat</button>
-        <div id="current-page" class="hidden">Current Page: 1</div>
-        <canvas id="pdfViewer" style="border: 1px solid black;"></canvas>
+    <div id="pdf-viewer"></div>
+    <div class="chat-container" style="padding: 20px;">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 offset-md-2">
+                    <div class="card-body">
+                        <div id="chat-messages" class="mb-3 chat-messages"></div>
+                        <form id="chat-form">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="message-input" placeholder="Type your message...">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-primary" id="send-button">Send</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div id="chatContainer" style="display: none;">
-        <button class="button" onclick="toggleFullscreen('chat')">&#x26F6; Fullscreen</button>
-        <button class="button" onclick="toggleView('pdf')">Switch to PDF</button>
-        <div id="chat"></div>
-    </div>  
-    <script src="https://cdn.jsdelivr.net/npm/chatjs/dist/chatjs.js"></script>
-    <script src="{{ url_for('static', filename='pdf_formatting.js') }}"></script>
     <script>
-        let isPdfFullscreen = false;
-        let isChatFullscreen = false;
-
-        // Function to load PDF and display it in the left container
-        async function loadPDF(pdfId) {
-            const pdfPath = `/serve_pdf/${pdfId}`;
-            const pdfDoc = await pdfjsLib.getDocument(pdfPath);
-            const page = await pdfDoc.getPage(1); // Assuming initial page is 1
-
-            const canvas = document.getElementById('pdfViewer');
-            const context = canvas.getContext('2d');
-
-            const viewport = page.getViewport({ scale: 1 });
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-
-            const renderContext = {
-                canvasContext: context,
-                viewport: viewport
-            };
-            await page.render(renderContext);
-
-            // Log page number
-            console.log('Current Page:', page.pageNumber);
+        var pdf_data_base64 = "{{ pdf_data_base64 }}"; // Ensure this is correctly replaced with actual base64-encoded PDF data
+        var pdfData = atob(pdf_data_base64);
+        var pdfDataBytes = new Uint8Array(pdfData.length);
+        for (var i = 0; i < pdfData.length; i++) {
+            pdfDataBytes[i] = pdfData.charCodeAt(i);
         }
 
-        // Function to initialize ChatJS
-        function initializeChat() {
-            // Replace 'your-chat-id' with your ChatJS chat ID
-            const chat = new Chat('chat', 'your-chat-id');
-            chat.init();
+        var pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.js';
+
+        var loadingTask = pdfjsLib.getDocument({data: pdfDataBytes});
+        loadingTask.promise.then(function(pdf) {
+            var numPages = pdf.numPages;
+            console.log('Number of Pages: ' + numPages);
+            var pdfViewer = document.getElementById('pdf-viewer');
+
+            for (let pageNumber = 1; pageNumber <= numPages; pageNumber++) {
+                pdf.getPage(pageNumber).then(function(page) {
+                    var scale = 1.5; // Adjust scale as needed
+                    var viewport = page.getViewport({scale: scale});
+                    var pageContainer = document.createElement('div');
+                    pageContainer.className = 'page-container';
+
+                    var canvas = document.createElement('canvas');
+                    var context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    pageContainer.appendChild(canvas);
+                    pdfViewer.appendChild(pageContainer);
+
+                    var renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    page.render(renderContext);
+                });
+            }
+        });
+    </script>
+    <!-- Include Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Function to send a message and get the answer
+        function sendMessage() {
+            console.log("Sending message...");
+            var messageInput = document.getElementById("message-input");
+            var message = messageInput.value.trim();
+    
+            if (message !== "") {
+                // Make an AJAX request to your server
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/get_answer", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        displayMessage(message, response.answer);
+                    }
+                };
+                var pdf_id = 1;//TODO get pdf id from url
+                var course_id = 2;//TODO get course id from url, implement course_id
+                xhr.send(JSON.stringify({ question: message, pdf_id: pdf_id, course_id: course_id}));
+    
+                // Clear the input field
+                messageInput.value = "";
+            }
         }
+    
+        // Function to display a message in the chat interface
+        function displayMessage(question, answer) {
+            console.log("Question: " + question);
+            console.log("Answer: " + answer);
 
+            // Create a new div element
+            var chatMessages = document.getElementById("chat-messages");
+            var questionElement = document.createElement("div");
+            questionElement.textContent = question;
+            chatMessages.appendChild(questionElement);
+    
+            var answerElement = document.createElement("div");
+            answerElement.textContent = answer;
+            chatMessages.appendChild(answerElement);
+        }
+    
+        var sendButton = document.getElementById("send-button");
+        sendButton.addEventListener("click", function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            console.log("Send pressed");
+            sendMessage();
+        });
 
-        // Load PDF and initialize ChatJS
-        window.onload = function() {
-            const pdfId = "{{ pdf.id }}"; // Replace with actual PDF ID
-            loadPDF(pdfId);
-            initializeChat();
-        };
+        // TODO fix event listener for the enter key
+        // Event listener for the enter key
+        var messageInput = document.getElementById("message-input");
+        messageInput.addEventListener("keydown", function(event) {
+            if (event.key == "Enter") {
+                console.log("Enter key pressed");
+                sendMessage();
+            }
+        });
     </script>
 </body>
 </html>

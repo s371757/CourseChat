@@ -14,6 +14,10 @@ class Course(db.Model):
     title = db.Column(db.String(100), nullable=False)
     university_id = db.Column(db.Integer, db.ForeignKey('university.id'), nullable=False)
     pdfs = db.relationship('Pdf', backref='course', lazy=True)
+    password_hash = db.Column(db.String(128), nullable=False)
+    api_key = db.Column(db.String(128), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
 
 
 class Pdf(db.Model):
@@ -28,7 +32,6 @@ class ChatEntry(db.Model):
     question = db.Column(db.String(500), nullable=False)
     answer = db.Column(db.String(500))
     page_number = db.Column(db.Integer)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     pdf_id = db.Column(db.Integer, db.ForeignKey('pdf.id'), nullable=False)
 
 class User(db.Model):

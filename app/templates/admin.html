@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>Admin Page</title>
+    <link rel="icon" href="/static/images/favicon.ico">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <!-- Bootstrap JS and jQuery (necessary for Bootstrap's JavaScript plugins) -->
@@ -13,14 +14,14 @@
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">Admin Page</a>
+        <a class="navbar-brand" href="#">Instructor Page</a>
         <div class="navbar-nav ml-auto">
             <a class="nav-item nav-link" href="{{ url_for('main.logout') }}">Logout</a>
         </div>
     </nav>
 
     <div class="container mt-5">
-        <h1 class="mb-4">Add a Course</h1>
+        <h2 class="mb-4">Add a Course</h2>
         <form action="{{ url_for('main.add_course') }}" method="post">
             <div class="form-group">
                 <label for="title">Course Title</label>
@@ -28,7 +29,7 @@
             </div>
             <button type="submit" class="btn btn-primary">Add Course</button>
         </form>
-
+        <br/>
         <h2 class="mt-4">Upload PDF to Course</h2>
         <form action="{{ url_for('main.upload_pdf') }}" method="post" enctype="multipart/form-data">
             <div class="form-group">
@@ -45,6 +46,21 @@
             </div>
             <button type="submit" class="btn btn-primary">Upload PDF</button>
         </form>
+        <br/>
+        <h2 class="mt-4">Delete a Course</h2>
+        <form action="{{ url_for('main.delete_course') }}" method="post">
+            <div class="form-group">
+                <label for="course_del">Select a Course</label>
+                <select class="form-control" id="course_del" name="course_del">
+                    {% for course in courses %}
+                        <option value="{{ course.id }}">{{ course.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-danger">Delete Course</button>
+        </form>
+
+
     </div>
 </body>
 </html>
