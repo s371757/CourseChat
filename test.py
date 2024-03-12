@@ -1,6 +1,8 @@
 # init_db.py
-from app import create_app, db
 
-app = create_app()
-with app.app_context():
-    db.create_all()
+from app.utils import clear_data
+def main():
+    clear_data()
+
+if __name__ == "__main__":
+    main()

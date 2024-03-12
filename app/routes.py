@@ -4,7 +4,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 
 from .forms import LoginForm 
 from .utils import allowed_file, check_password_hash, load_pdf_to_data
-from .api import ask_file, ask_course 
+from .api import ask_file, ask_course, add_pdf_index
 from .models import User, Course, Pdf, ChatEntry , University   
 from . import db
 
@@ -129,7 +129,7 @@ def upload_pdf():
         if file and allowed_file(file.filename):
             pdf_data = file.read()
             course_id = request.form['course']  
-            #TODO indexing(course_id)# Correct way to get course_id
+            add_pdf_index(course_id, pdf_data)
             new_pdf = Pdf(title=file.filename, data=pdf_data, course_id=course_id)
             db.session.add(new_pdf)
             db.session.commit()
@@ -163,47 +163,6 @@ def serve_pdf(pdf_id):
     pdf = Pdf.query.get_or_404(pdf_id)
     return Response(pdf.data, mimetype='application/pdf')
 
-@main.route('/submit_question', methods=['POST'])
-def submit_question():
-    question = request.form.get('question')
-    page_number = request.form.get('page_number')
-    pdf_id = request.form.get('pdf_id')
-
-    # TODO Logic to determine the answer
-    # This is a placeholder and should be replaced with your actual logic
-    answer = "This is a placeholder answer."
-
-    new_entry = ChatEntry(question=question, answer=answer, page_number=page_number, pdf_id=pdf_id, user_id=current_user.id)
-    db.session.add(new_entry)
-    db.session.commit()
-
-    return redirect(url_for('show_pdf', pdf_id=pdf_id))
-
-@main.route('/ask_course', methods=['GET'])
-def ask_url_flask():
-    pdf_id = request.args.get('pdf_id')
-    course_id = request.args.get('course_id')
-    question = request.args.get('question')
-    if not pdf_id or not question:
-        return jsonify({"error": "ID and question are required."}),   400
-    # Retrieve the PDF data from the SQLite database using the ID
-    pdf_data = get_pdf_data_from_db(pdf_id)
-    if not pdf_data:
-        return jsonify({"error": "ID not found in the database."}),   404
-    return ask_course(course_id, question)
-
-@main.route('/ask_file', methods=['POST'])
-def ask_file_flask():
-    pdf_id = request.args.get('pdf_id')
-    question = request.args.get('question')
-    if not pdf_id or not question:
-        return jsonify({"error": "ID and question are required."}),   400
-    # Retrieve the PDF data from the SQLite database using the ID
-    pdf_data = get_pdf_data_from_db(pdf_id)
-    if not pdf_data:
-        return jsonify({"error": "ID not found in the database."}),   404
-    return ask_file(pdf_id, question)
-
 
 @main.route('/log_chat_entry', methods=['POST'])
 def log_chat_entry():
@@ -228,30 +187,35 @@ def get_pdf_data_from_db(pdf_id):
     pdf = db.session.query(Pdf).filter_by(id=pdf_id).first()
     return pdf.data if pdf else None
 
-########################################################Debugging############################################
-
 @main.route('/get_answer', methods=['POST'])
 def get_answer():
-    print("Getting answer")
-    # Extract data from the request
-    data = request.get_json()
-    question = data.get('question')
-    pdf_id = data.get('pdf_id')
-    course_id = data.get('course_id')
-    # Placeholder for the logic to get the answer
-    # This could involve querying a database, calling an external API, etc.
-    # For demonstration, let's assume a simple function that returns a static answer
+    try: 
+        print("Getting answer")
+        # Extract data from the request
+        data = request.get_json()
+        question = data.get('question')
+        pdf_id = data.get('pdf_id')
+        course_id = data.get('course_id')
+        print(f"Question: {question}")
+        print(f"PDF ID: {pdf_id}")
+        print(f"Course ID: {course_id}")
+        # Get the answer
+        answer = ask_course(course_id, question)
+        #answer = get_static_answer()
 
-    # Get the answer
-    answer = get_static_answer()
-
-    # Return the answer as JSON
-    return jsonify({'answer': answer})
+        #TODO implement logging
+        #TODO add page numbers
+        new_entry = ChatEntry(question=question, answer=answer, page_number=1, pdf_id=pdf_id, user_id=current_user.id)
+        db.session.add(new_entry)
+        db.session.commit()
+        return jsonify({'answer': answer})
+    except Exception as e:
+        print(f"Error in get_answer: {e}")
 
 def get_static_answer():
-        # This is a placeholder function. Replace this with your actual logic.
-        return "This is a static answer to your question."
+    return "This is a static answer to your question."
 
+########################################################Debugging############################################
 
 @main.route('/chat')
 #@login_required
