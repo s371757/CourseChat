@@ -2,7 +2,7 @@
 
 1. Initialise Databses
     - flask db init
-2.. Migration:
+2. Migration:
 
     - flask db migrate -m "comment"
     - flask db upgrade
