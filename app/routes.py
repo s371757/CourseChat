@@ -4,10 +4,11 @@ from flask_login import login_user, logout_user, login_required, current_user
 
 from .forms import LoginForm 
 from .utils import allowed_file, check_password_hash, load_pdf_to_data, set_api_key
-from .api import ask_file, ask_course, add_pdf_index
+from .api import ask_pdf, add_pdf_index, load_index
 from .models import User, Course, Pdf, ChatEntry , University   
 from . import db
 import base64
+import json
 
 main = Blueprint('main', __name__)
 
@@ -82,13 +83,13 @@ def admin():
 #@login_required
 def superadmin():
     user_id = session.get('user_id')
-    #if user_id is None:
-    #    return "Not logged in", 401
-    #user = User.query.get(user_id)
-    #if user is None:
-    #    return "User not found", 404
-    #if user_id != 2:
-    #    return "Not authorized", 403
+    if user_id is None:
+        return "Not logged in", 401
+    user = User.query.get(user_id)
+    if user is None:
+        return "User not found", 404
+    if user_id != 2:
+        return "Not authorized", 403
     universities = University.query.all()
     courses = Course.query.all()
     return render_template('superadmin.html', universities=universities, courses = courses)
@@ -171,7 +172,9 @@ def upload_pdf():
         if file and allowed_file(file.filename):
             pdf_data = file.read()
             course_id = request.form['course']  
-            add_pdf_index(course_id, pdf_data)
+            pdf_id = Pdf.query.count() + 1
+            add_pdf_index(pdf_id, pdf_data)
+            #add_course_index(course_id, pdf_data)
             new_pdf = Pdf(title=file.filename, data=pdf_data, course_id=course_id)
             db.session.add(new_pdf)
             db.session.commit()
@@ -192,7 +195,7 @@ def course_details(course_id):
     course = Course.query.get_or_404(course_id)
     pdfs = Pdf.query.filter_by(course_id=course_id).all()
     api_key = course.api_key
-    #set_api_key(api_key)
+    #set_api_key(api_key)#TODO
     return render_template('course_details.html', course=course, pdfs=pdfs)
 
 
@@ -201,7 +204,7 @@ def pdf_details(pdf_id):
     pdf = Pdf.query.get_or_404(pdf_id)
     pdf_data_base64 = base64.b64encode(pdf.data).decode('utf-8')
     entries = ChatEntry.query.filter_by(pdf_id=pdf_id).all()
-    return render_template('pdf_details.html', pdf_title = pdf.title, pdf_data_base64=pdf_data_base64, entries=entries)
+    return render_template('pdf_details.html', pdf_id=pdf_id, pdf_title = pdf.title, pdf_data_base64=pdf_data_base64, entries=entries)
 
 
 @main.route('/log_chat_entry', methods=['POST'])
@@ -230,36 +233,29 @@ def get_pdf_data_from_db(pdf_id):
 @main.route('/get_answer', methods=['POST'])
 def get_answer():
     try: 
-        print("Getting answer")
+        print("Entered routes: get_answer")
         # Extract data from the request
         data = request.get_json()
         question = data.get('question')
         pdf_id = data.get('pdf_id')
-        course_id = data.get('course_id')
-        user_id = session.get('user_id')
         print(f"Question: {question}")
-        print(f"PDF ID: {pdf_id}")
-        print(f"Course ID: {course_id}")
+        print(f"Pdf_Id: {pdf_id}")
         # Get the answer
-        #answer = ask_course(course_id, question)
-        answer = get_static_answer()
+        answer = ask_pdf(question, pdf_id)
+        #answer = get_static_answer()
         #TODO add page numbers
-        new_entry = ChatEntry(question=question, answer=answer, page_number=1, pdf_id=pdf_id)
-        db.session.add(new_entry)
-        db.session.commit()
-        print("ChatEntry logged succesfully")
+        if answer:
+            new_entry = ChatEntry(question=question, answer=answer, page_number=1, pdf_id=pdf_id)
+            db.session.add(new_entry)
+            db.session.commit()
+            print("ChatEntry logged succesfully")
+        else: 
+            print("No answer found")    
         return jsonify({'answer': answer})
     except Exception as e:
-        print(f"Error in get_answer: {e}")
+        print(f"Error in routes: get_answer: {e}")
 
 def get_static_answer():
     return "This is a static answer to your question."
 
 ########################################################Debugging############################################
-
-@main.route('/chat')
-#@login_required
-def chat():
-    pdf_id = 1,
-    course_id = 1
-    return render_template('chat.html', pdf_id = pdf_id, course_id = course_id)

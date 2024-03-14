@@ -1,15 +1,11 @@
 # Important commands
 
-1. Migration:
-    - flask db migrate -m "Added data column to PDF table"
+1. Initialise Databses
+    - flask db init
+2.. Migration:
+
+    - flask db migrate -m "comment"
     - flask db upgrade
 
-
-@misc{pdfgpt2023,
-  author = {Bhaskar Tripathi},
-  title = {PDF-GPT},
-  year = {2023},
-  publisher = {GitHub},
-  journal = {GitHub Repository},
-  howpublished = {\url{https://github.com/bhaskatripathi/pdfGPT}}
-}
+3. Run application: run.py 
+   

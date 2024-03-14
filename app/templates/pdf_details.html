@@ -108,7 +108,6 @@
         var loadingTask = pdfjsLib.getDocument({data: pdfDataBytes});
         loadingTask.promise.then(function(pdf) {
             var numPages = pdf.numPages;
-            console.log('Number of Pages: ' + numPages);
             var pdfViewer = document.getElementById('pdf-viewer');
 
             for (let pageNumber = 1; pageNumber <= numPages; pageNumber++) {
@@ -139,33 +138,68 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        // Function to send a message and get the answer
         function sendMessage() {
             console.log("Sending message...");
             var messageInput = document.getElementById("message-input");
             var message = messageInput.value.trim();
-    
+
             if (message !== "") {
+                // Display the user's question in the chat
+                displayMessage(message);
+
+                // Display a loading message
+                var loadingMessageId = displayLoadingMessage("Reading documents...");
+                console.log("loading")
                 // Make an AJAX request to your server
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", "/get_answer", true);
                 xhr.setRequestHeader("Content-Type", "application/json");
                 xhr.onreadystatechange = function() {
-                    if (xhr.readyState === 4 && xhr.status === 200) {
-                        var response = JSON.parse(xhr.responseText);
-                        displayMessage(message, response.answer);
+                    if (xhr.readyState === 4) {
+                        removeMessage(loadingMessageId); // Remove the loading message
+                        if (xhr.status === 200) {
+                            var response = JSON.parse(xhr.responseText);
+                            displayAnswer(response.answer);
+                        } else {
+                            displayAnswer("Sorry, there was an error processing your request."); // Handle errors
+                        }
                     }
                 };
-                var pdf_id = 1;//TODO get pdf id from url
-                var course_id = 2;//TODO get course id from url, implement course_id
-                xhr.send(JSON.stringify({ question: message, pdf_id: pdf_id, course_id: course_id}));
-    
+                var pdf_id = "{{pdf_id}}";
+                xhr.send(JSON.stringify({question: message, pdf_id: pdf_id}));
+
                 // Clear the input field
                 messageInput.value = "";
             }
+        }   
+
+        function displayLoadingMessage(message) {
+            var chatMessages = document.getElementById("chat-messages");
+            var loadingDiv = document.createElement("div");
+            loadingDiv.textContent = message;
+            loadingDiv.className = 'message loading-message'; // Assign classes for styling
+            chatMessages.appendChild(loadingDiv);
+            
+            // Generate a unique ID for the loading message
+            var loadingMessageId = 'loading-' + Date.now();
+            loadingDiv.id = loadingMessageId;
+            
+            // Scroll to the latest message
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+            return loadingMessageId;
         }
+        
+        function removeMessage(messageId) {
+            console.log("Removing message with id: " + messageId);
+            var messageElement = document.getElementById(messageId);
+            if (messageElement) {
+                messageElement.parentNode.removeChild(messageElement);
+            }
+        }
+
     
-        function displayMessage(question, answer) {
+        function displayMessage(question) {
             var chatMessages = document.getElementById("chat-messages");
                 
             // Create a div for the question with appropriate classes
@@ -173,7 +207,13 @@
             questionDiv.textContent = question;
             questionDiv.className = 'message user-question'; // Assign classes for styling
             chatMessages.appendChild(questionDiv);
-                
+
+            // Scroll to the latest message
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function displayAnswer(answer) {
+            var chatMessages = document.getElementById("chat-messages");
             // Create a div for the answer with appropriate classes
             var answerDiv = document.createElement("div");
             answerDiv.textContent = answer;
@@ -189,7 +229,6 @@
         var sendButton = document.getElementById("send-button");
         sendButton.addEventListener("click", function(event) {
             event.preventDefault(); // Prevent the default form submission
-            console.log("Send pressed");
             sendMessage();
         });
 
@@ -197,7 +236,6 @@
             messageInput.addEventListener("keydown", function(event) {
             if (event.key === "Enter") {
                 event.preventDefault(); // Prevent the default form submission
-                console.log("Enter key pressed");
                 sendMessage();
             }
         });
