@@ -1,4 +1,4 @@
 .env
-index_db
-instance
-migrations
+index_db/
+instance/
+migrations/
