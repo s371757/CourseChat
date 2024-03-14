@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from flask_login import login_user, logout_user, login_required, current_user
 
 from .forms import LoginForm 
-from .utils import allowed_file, check_password_hash, load_pdf_to_data
+from .utils import allowed_file, check_password_hash, load_pdf_to_data, set_api_key
 from .api import ask_file, ask_course, add_pdf_index
 from .models import User, Course, Pdf, ChatEntry , University   
 from . import db
@@ -171,7 +171,7 @@ def upload_pdf():
         if file and allowed_file(file.filename):
             pdf_data = file.read()
             course_id = request.form['course']  
-            #add_pdf_index(course_id, pdf_data)
+            add_pdf_index(course_id, pdf_data)
             new_pdf = Pdf(title=file.filename, data=pdf_data, course_id=course_id)
             db.session.add(new_pdf)
             db.session.commit()
@@ -191,6 +191,8 @@ def upload_pdf():
 def course_details(course_id):
     course = Course.query.get_or_404(course_id)
     pdfs = Pdf.query.filter_by(course_id=course_id).all()
+    api_key = course.api_key
+    #set_api_key(api_key)
     return render_template('course_details.html', course=course, pdfs=pdfs)
 
 
@@ -241,8 +243,6 @@ def get_answer():
         # Get the answer
         #answer = ask_course(course_id, question)
         answer = get_static_answer()
-
-        #TODO implement logging
         #TODO add page numbers
         new_entry = ChatEntry(question=question, answer=answer, page_number=1, pdf_id=pdf_id)
         db.session.add(new_entry)

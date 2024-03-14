@@ -9,17 +9,18 @@ from llama_index.core import StorageContext
 from . import db
 from .models import Course, Pdf
 from .utils import clear_data, load_pdf_to_data
+import os.path
+from llama_index.core import (
+    VectorStoreIndex,
+    SimpleDirectoryReader,
+    StorageContext,
+    load_index_from_storage,
+)
+import os
+from llama_index.llms.ollama import Ollama
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.core import Settings
 
-#TODO: Add the OpenAI API key to the environment variables depending on the course ID 
-def load_openai_key() -> str:
-    key = os.environ.get("OPENAI_API_KEY")
-    if key is None:
-        key = os.environ.get("OPENAI_API_KEY")
-        if key is None:
-            raise ValueError(
-                "[ERROR]:  OPENAI_API_KEY"
-            )
-    return key
 
 
 def ask_course(course_id: str, question: str):
@@ -63,6 +64,10 @@ def load_index(id: str) -> VectorStoreIndex:
     return index
 
 def add_pdf_index(course_id: str, pdf_data: str):
+    Settings.llm = Ollama(model="llama2", request_timeout=60.0)
+    Settings.embed_model = HuggingFaceEmbedding(
+    model_name="BAAI/bge-small-en-v1.5"
+    )
     clear_data()
     load_pdf_to_data(pdf_data)
     if was_initialized(course_id):
@@ -74,11 +79,12 @@ def add_pdf_index(course_id: str, pdf_data: str):
     return index
 
 def was_initialized(course_id: str) -> bool:
-    pdfs = Pdf.query.filter_by(course_id=course_id).all()
-    # Check if any PDFs were found 
-    #TODO potential error
-    if pdfs:
-        print(f"There are {len(pdfs)} PDF(s) associated with course ID {course_id}.")
+    base_path = "./chroma_db" 
+    index_name = "Kurs" + course_id # Adjust this path to where your indexes are stored
+    index_path = os.path.join(base_path, index_name)
+    # Check if the directory for this index exists
+    if os.path.isdir(index_path):
+        print(f"There exists a index associated with course ID {course_id}.")
         return True
     else:
         print(f"No PDFs are associated with course ID {course_id}.")
@@ -93,9 +99,9 @@ def create_index(course_id: str):
         # initialize client, setting path to save data
         db = chromadb.PersistentClient(path="./chroma_db")
         # create collection
-        course = Course.query.get(course_id)
-        course_title = course.title
-        chroma_collection = db.get_or_create_collection(course_title)
+        coursetitle ="Kurs"+ course_id
+        print(coursetitle)
+        chroma_collection = db.get_or_create_collection(coursetitle)
         print(chroma_collection)
         # assign chroma as the vector_store to the context
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
@@ -117,9 +123,8 @@ def add_to_index(course_id: str):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         folder_path = os.path.join(current_dir, 'data')
         documents = SimpleDirectoryReader(folder_path).load_data()
-        course = Course.query.get(course_id)
-        course_title = course.title
-        index = load_index(course_title)
+        coursetitle = "Kurs" +course_id
+        index = load_index(coursetitle)
         print(index)
         for document in documents:
             index.insert(document) 
@@ -127,4 +132,11 @@ def add_to_index(course_id: str):
         return index
     except Exception as e:
         print(f"Error in add_to_index: {e}")
+
+
+    # Either way we can now query the index
+    query_engine = index.as_query_engine()
+    response = query_engine.query("What is the paper about?")
+    print(response)
+    return response
 

@@ -45,6 +45,32 @@
             width: 100% !important;
             height: auto !important;
         }
+        /* Chat messages styling */
+        .message {
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin: 5px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .user-question {
+            background-color: #007bff;
+            color: white;
+            margin-left: auto;
+            margin-right: 10px;
+            width: auto;
+            text-align: left;
+        }
+
+        .chatbot-answer {
+            background-color: #dddddd;
+            color: black;
+            margin-left: 10px;
+            margin-right: auto;
+            text-align: left;
+        }
+
     </style>
 </head>
 <body>
@@ -139,21 +165,26 @@
             }
         }
     
-        // Function to display a message in the chat interface
         function displayMessage(question, answer) {
-            console.log("Question: " + question);
-            console.log("Answer: " + answer);
-
-            // Create a new div element
             var chatMessages = document.getElementById("chat-messages");
-            var questionElement = document.createElement("div");
-            questionElement.textContent = question;
-            chatMessages.appendChild(questionElement);
-    
-            var answerElement = document.createElement("div");
-            answerElement.textContent = answer;
-            chatMessages.appendChild(answerElement);
+                
+            // Create a div for the question with appropriate classes
+            var questionDiv = document.createElement("div");
+            questionDiv.textContent = question;
+            questionDiv.className = 'message user-question'; // Assign classes for styling
+            chatMessages.appendChild(questionDiv);
+                
+            // Create a div for the answer with appropriate classes
+            var answerDiv = document.createElement("div");
+            answerDiv.textContent = answer;
+            answerDiv.className = 'message chatbot-answer'; // Assign classes for styling
+            chatMessages.appendChild(answerDiv);
+                
+            // Scroll to the latest message
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
+        
+
     
         var sendButton = document.getElementById("send-button");
         sendButton.addEventListener("click", function(event) {
@@ -162,15 +193,15 @@
             sendMessage();
         });
 
-        // TODO fix event listener for the enter key
-        // Event listener for the enter key
         var messageInput = document.getElementById("message-input");
-        messageInput.addEventListener("keydown", function(event) {
-            if (event.key == "Enter") {
+            messageInput.addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault(); // Prevent the default form submission
                 console.log("Enter key pressed");
                 sendMessage();
             }
         });
+
     </script>
 </body>
 </html>
