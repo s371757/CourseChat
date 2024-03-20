@@ -3,9 +3,6 @@ import os
 def allowed_file(filename):
     return filename.lower().endswith('.pdf')
 
-def check_password_hash(hashed_password, password):
-    return hashed_password == password
-
 def load_pdf_to_data(pdf_data: bytes):
     print("[INFO]: Loading PDF to data")
     # Get the directory of the current script

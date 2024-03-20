@@ -96,4 +96,4 @@ def ask_pdf(pdf_id: str, question: str):
 if __name__ == "__main__":
     #add_pdf_index("1234")
     #print("Done")   
-    ask_pdf("17", "What is the paper about?")
+    ask_pdf("17", "Warum Videos?")

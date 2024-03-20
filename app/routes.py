@@ -1,14 +1,19 @@
 # routes.py
-from flask import Blueprint, render_template, request, flash, redirect, url_for, Response, jsonify, session
-from flask_login import login_user, logout_user, login_required, current_user
+from flask import Blueprint, render_template, request, flash, redirect, url_for, Response, jsonify, session, abort, send_file, make_response, send_from_directory
+from flask_login import login_user, logout_user, login_required, current_user, UserMixin
+import pandas as pd
+from io import BytesIO
+from werkzeug.security import check_password_hash
 
-from .forms import LoginForm 
-from .utils import allowed_file, check_password_hash, load_pdf_to_data, set_api_key
+from .forms import LoginForm , PasswordForm
+from .utils import allowed_file
 from .api import ask_pdf, add_pdf_index, load_index
 from .models import User, Course, Pdf, ChatEntry , University   
 from . import db
 import base64
 import json
+import traceback
+import os
 
 main = Blueprint('main', __name__)
 
@@ -40,27 +45,29 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
-        if user is not None and not check_password_hash(user.password_hash, form.password.data):
-            flash('Invalid username or password.')
-            print("Invalid password")
-            return redirect(url_for('main.login'))
-        if user is not None and check_password_hash(user.password_hash, form.password.data):
+        if user and user.password_hash == form.password.data:
+            # The login_user function is crucial for handling user session with Flask-Login
             session['user_id'] = user.id
+            login_user(user)
             flash('Logged in successfully.')
-            if user == "admin" and user.password == "admin":
-                print("Super Admin")
-                return render_template('superadmin.html')
-            else: return redirect(url_for('main.admin'))
+            
+            # Assuming a super admin check with hardcoded username (not recommended for production)
+            if user.id == 1:
+                flash("Super Admin logged in.")  # Just an example, adjust based on your actual logic
+                return render_template('superadmin.html')  # Assuming you have a separate template for super admin
+            else:
+                return redirect(url_for('main.admin'))  # Redirect to a general admin page or dashboard
+                
         else:
             flash('Invalid username or password.')
-    return render_template('login.html', form=form)         
+    return render_template('login.html', form=form)
 
 
 
 @main.route('/logout')
-#@login_required
-def logout():#TODO
+def logout():
     logout_user()
+    flash('You have been logged out.')
     return redirect(url_for('main.index'))
 
 @main.route('/admin')
@@ -72,24 +79,25 @@ def admin():
     user = User.query.get(user_id)
     if user is None:
         return "User not found", 404
-    if user_id == 2:
+    if user_id == 1:
         universities = University.query.all()
         courses = Course.query.all()
         return render_template('superadmin.html', universities=universities, courses = courses)
-    courses = Course.query.all()
+    courses = Course.query.filter_by(user_id=user_id).all()
     return render_template('admin.html', courses=courses)
+
 
 @main.route('/superadmin')
 #@login_required
 def superadmin():
     user_id = session.get('user_id')
     if user_id is None:
-        return "Not logged in", 401
+       return "Not logged in", 401
     user = User.query.get(user_id)
     if user is None:
-        return "User not found", 404
+       return "User not found", 404
     if user_id != 2:
-        return "Not authorized", 403
+       return "Not authorized", 403
     universities = University.query.all()
     courses = Course.query.all()
     return render_template('superadmin.html', universities=universities, courses = courses)
@@ -156,6 +164,21 @@ def delete_course():
         #TODO add cleanup for index 
     return redirect(url_for('main.admin'))
 
+@main.route('/course_overview/<int:course_id>')
+@login_required
+def course_overview(course_id):
+    course = Course.query.get_or_404(course_id)
+
+    # Ensure the current user is the creator of the course
+    if course.user_id != current_user.id:
+        abort(403)
+
+    # Query for PDFs associated with this course
+    pdfs = Pdf.query.filter_by(course_id=course_id).all()
+
+    return render_template('course_overview.html', course=course, pdfs=pdfs)
+
+
 @main.route('/upload_pdf', methods=['POST'])
 # @login_required
 def upload_pdf():
@@ -189,15 +212,18 @@ def upload_pdf():
         return redirect(url_for('main.admin'))
 
  
-
-@main.route('/course/<int:course_id>')
+@main.route('/course/<int:course_id>', methods=['GET', 'POST'])
 def course_details(course_id):
     course = Course.query.get_or_404(course_id)
-    pdfs = Pdf.query.filter_by(course_id=course_id).all()
-    api_key = course.api_key
-    #set_api_key(api_key)#TODO
-    return render_template('course_details.html', course=course, pdfs=pdfs)
-
+    form = PasswordForm()
+    if form.validate_on_submit():
+        # Assuming you store hashed passwords in 'password_hash'
+        if course.password_hash == form.password.data:
+            pdfs = Pdf.query.filter_by(course_id=course_id).all()
+            return render_template('course_details.html', course=course, pdfs=pdfs, form=form)
+        else:
+            flash('Incorrect password. Please try again.', 'danger')
+    return render_template('verify_password.html', form=form, course_id=course_id)
 
 @main.route('/pdf/<int:pdf_id>')#TODO also add course_id
 def pdf_details(pdf_id):
@@ -238,14 +264,15 @@ def get_answer():
         data = request.get_json()
         question = data.get('question')
         pdf_id = data.get('pdf_id')
+        page_number = data.get('page_number')
         print(f"Question: {question}")
         print(f"Pdf_Id: {pdf_id}")
         # Get the answer
-        answer = ask_pdf(question, pdf_id)
-        #answer = get_static_answer()
+        #answer = ask_pdf(question, pdf_id)
+        answer = get_static_answer()
         #TODO add page numbers
         if answer:
-            new_entry = ChatEntry(question=question, answer=answer, page_number=1, pdf_id=pdf_id)
+            new_entry = ChatEntry(question=question, answer=answer, page_number=page_number, pdf_id=pdf_id)
             db.session.add(new_entry)
             db.session.commit()
             print("ChatEntry logged succesfully")
@@ -258,4 +285,46 @@ def get_answer():
 def get_static_answer():
     return "This is a static answer to your question."
 
+@main.route('/download-pdf-entries/<int:pdf_id>')
+def download_pdf_entries(pdf_id):
+    try:
+        # Use SQLAlchemy to fetch the entries directly from the database
+        entries_query = ChatEntry.query.filter_by(pdf_id=pdf_id).all()
+
+        # Transform the SQLAlchemy objects into a list of dictionaries
+        entries = [
+            {
+                'page_number': entry.page_number, 
+                'question': entry.question, 
+                'answer': entry.answer
+            } for entry in entries_query
+        ]
+
+        # Convert entries to a pandas DataFrame
+        df = pd.DataFrame(entries)
+
+        # Create a BytesIO buffer to save the Excel file
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='PDF Entries')
+
+        # Rewind the buffer
+        output.seek(0)
+
+        # Create a response object with the Excel file content
+        response = Response(output.getvalue(), mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        
+        # Set headers to prompt for download with a specific filename
+        response.headers['Content-Disposition'] = f'attachment; filename=entries_{pdf_id}.xlsx'
+
+        return response
+    except Exception as e:
+        # If anything goes wrong, print the error message and return a 500 response
+        print(f"Error generating Excel file: {e}")
+        return Response("Error generating Excel file", status=500)
+
 ########################################################Debugging############################################
+
+@main.errorhandler(403)
+def forbidden(error):
+    return render_template('403.html'), 403

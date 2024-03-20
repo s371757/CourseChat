@@ -45,3 +45,22 @@ class User(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+    @property
+    def is_active(self):
+        """True, as all users are active."""
+        return True
+
+    @property
+    def is_authenticated(self):
+        """Return True if the user is authenticated."""
+        return True
+
+    @property
+    def is_anonymous(self):
+        """False, as anonymous users aren't supported."""
+        return False
+
+    def get_id(self):
+        """Return the user id as a unicode string."""
+        return str(self.id)

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ course.title }} -- Overview</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/images/favicon.ico">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">{{ course.title }} -- Overview</h2>
+        <p>Here you can explore questions and answers related to each document.</p>
+        <div class="accordion" id="pdfAccordion">
+            {% for pdf in pdfs %}
+            <div class="card">
+                <div class="card-header" id="heading{{ loop.index }}">
+                    <h2 class="mb-0">
+                        <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapse{{ loop.index }}" aria-expanded="true" aria-controls="collapse{{ loop.index }}">
+                            {{ pdf.title }}
+                        </button>
+                    </h2>
+                </div>
+
+                <div id="collapse{{ loop.index }}" class="collapse" aria-labelledby="heading{{ loop.index }}" data-parent="#pdfAccordion">
+                    <div class="card-body">
+                        {% if pdf.entries|length > 0 %}
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Page Number</th>
+                                    <th>Question</th>
+                                    <th>Answer</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in pdf.entries %}
+                                <tr>
+                                    <td>{{ entry.page_number }}</td>
+                                    <td>{{ entry.question }}</td>
+                                    <td>{{ entry.answer | default('Awaiting response', true) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <a href="/download-pdf-entries/{{ pdf.id }}" class="btn btn-primary">Download as Excel</a>
+                        {% else %}
+                        <p>No chat entries found for this PDF.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <p>No PDFs found for this course.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

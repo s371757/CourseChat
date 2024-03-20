@@ -9,18 +9,19 @@ from flask_cors import CORS
 db = SQLAlchemy()
 login_manager = LoginManager()
 
+
 def create_app():
 
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///coursechat.db'
     app.config['SECRET_KEY'] = secrets.token_hex(32)  # Replace with a secure key
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
+    
     # Initialize extensions with the app
     db.init_app(app)
-    login_manager.init_app(app)
     migrate = Migrate(app, db)
-
+    login_manager.init_app(app)
+    login_manager.login_view = 'main.login'  # Specify the route for your login page
     CORS(app)
 
     # Import and register blueprints

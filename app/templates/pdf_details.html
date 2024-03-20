@@ -95,7 +95,7 @@
         </div>
     </div>
     <script>
-        var pdf_data_base64 = "{{ pdf_data_base64 }}"; // Ensure this is correctly replaced with actual base64-encoded PDF data
+        var pdf_data_base64 = "{{ pdf_data_base64 }}"; // Placeholder for your base64 PDF data
         var pdfData = atob(pdf_data_base64);
         var pdfDataBytes = new Uint8Array(pdfData.length);
         for (var i = 0; i < pdfData.length; i++) {
@@ -105,34 +105,49 @@
         var pdfjsLib = window['pdfjs-dist/build/pdf'];
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.js';
 
+        var numPagesGlobal; // Define a global variable to store the number of pages
+
         var loadingTask = pdfjsLib.getDocument({data: pdfDataBytes});
         loadingTask.promise.then(function(pdf) {
-            var numPages = pdf.numPages;
+            numPagesGlobal = pdf.numPages; // Set the global variable
             var pdfViewer = document.getElementById('pdf-viewer');
 
-            for (let pageNumber = 1; pageNumber <= numPages; pageNumber++) {
+            for (let pageNumber = 1; pageNumber <= numPagesGlobal; pageNumber++) {
                 pdf.getPage(pageNumber).then(function(page) {
-                    var scale = 1.5; // Adjust scale as needed
+                    var scale = 1.5;
                     var viewport = page.getViewport({scale: scale});
-                    var pageContainer = document.createElement('div');
-                    pageContainer.className = 'page-container';
-
                     var canvas = document.createElement('canvas');
                     var context = canvas.getContext('2d');
                     canvas.height = viewport.height;
                     canvas.width = viewport.width;
-
-                    pageContainer.appendChild(canvas);
-                    pdfViewer.appendChild(pageContainer);
 
                     var renderContext = {
                         canvasContext: context,
                         viewport: viewport
                     };
                     page.render(renderContext);
+
+                    var pageContainer = document.createElement('div');
+                    pageContainer.appendChild(canvas);
+                    pdfViewer.appendChild(pageContainer);
                 });
             }
         });
+
+        var currentPageNumber = 1;
+        var pdfViewer = document.getElementById('pdf-viewer');
+
+        function updateCurrentPageNumber() {
+            var scrollTop = pdfViewer.scrollTop;
+            var averagePageHeight = pdfViewer.scrollHeight / numPagesGlobal;
+            currentPageNumber = Math.ceil(scrollTop / averagePageHeight);
+            console.log('Current Page Number:', currentPageNumber);
+        }
+
+        pdfViewer.addEventListener('scroll', updateCurrentPageNumber);
+
+
+
     </script>
     <!-- Include Bootstrap JS and jQuery -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
@@ -149,7 +164,6 @@
 
                 // Display a loading message
                 var loadingMessageId = displayLoadingMessage("Reading documents...");
-                console.log("loading")
                 // Make an AJAX request to your server
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", "/get_answer", true);
@@ -166,7 +180,7 @@
                     }
                 };
                 var pdf_id = "{{pdf_id}}";
-                xhr.send(JSON.stringify({question: message, pdf_id: pdf_id}));
+                xhr.send(JSON.stringify({question: message, pdf_id: pdf_id, page_number: currentPageNumber}));
 
                 // Clear the input field
                 messageInput.value = "";
@@ -191,7 +205,6 @@
         }
         
         function removeMessage(messageId) {
-            console.log("Removing message with id: " + messageId);
             var messageElement = document.getElementById(messageId);
             if (messageElement) {
                 messageElement.parentNode.removeChild(messageElement);

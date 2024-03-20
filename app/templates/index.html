@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Select PDF</title>
+    <title>CourseChat</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/static/images/favicon.ico">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- Bootstrap JS and jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <!-- Bootstrap JS and jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -15,6 +15,9 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="#">CourseChat</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
@@ -24,17 +27,62 @@
         </div>
     </nav>
     <div class="container mt-5">
-
+        <div class="jumbotron">
+            <h1 class="display-4">Welcome to CourseChat!</h1>
+            <p class="lead">Empowering your study sessions with advanced LLM technology.</p>
+            <hr class="my-4">
+            <p>At CourseChat, we harness the power of LlamaIndex to change how students interact with lecture materials. Here's how to make the most of it:</p>
+            <ul>
+                <li><strong>Browse Available Courses:</strong> Start by exploring the courses we offer. Each course is equipped with a specialized chatbot, ready to assist you.</li>
+                <li><strong>Ask Specific Questions:</strong> Got a question? Just ask! Our chatbots can provide detailed explanations, clarify doubts, and guide you through complex topics.</li>
+                <li><strong>Engage with Lecture Materials:</strong> Use our platform to delve deeper into your study materials. It's like having a personal tutor at your fingertips.</li>
+            </ul>
+            <p>By integrating LlamaIndex's LLM capabilities, CourseChat aims to create an inclusive, supportive, and effective learning environment for everyone. Let's make learning an adventure!</p>
+        </div>
         <h2>Available Courses</h2>
-        <ul>
+        <div class="list-group">
             {% for course in courses %}
-            <li><a href="{{ url_for('main.course_details', course_id=course.id) }}">
-                {{ course.title }}</li>
+                <a href="{{ url_for('main.course_details', course_id=course.id) }}" class="list-group-item list-group-item-action">
+                    {{ course.title }}
+                </a>
             {% else %}
-                <li>No courses found.</li>
+                <p class="text-muted">No courses found.</p>
             {% endfor %}
-        </ul>
-    
+        </div>
     </div>
+    </br>
+    <!-- Credits Section -->
+    <footer class="text-center text-lg-start bg-light text-muted">
+        <section class="d-flex justify-content-center p-4 border-bottom">
+            <!-- GitHub Contact -->
+            <div>
+                <p>If you have any questions or contributions, feel free to ask on GitHub:</p>
+                <a href="https://github.com/s371757/Chat_With_Scripts" class="link-secondary">
+                    <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub" style="height: 24px;"> GitHub
+                </a>
+            </div>
+        </section>
+        <section class="">
+            <div class="container text-center text-md-start mt-5">
+                <!-- Grid row -->
+                <div class="row mt-3">
+                    <!-- Grid column -->
+                    <div class="col-md-3 col-lg-4 col-xl-3 mx-auto mb-4">
+                        <!-- Content -->
+                        <h6 class="text-uppercase fw-bold mb-4">
+                            <i class="fas fa-gem me-3"></i>CourseChat
+                        </h6>
+                        <p>
+                            Developed by Julia Wenkmann, Norbert Noster and Tina Heurich
+                        </p>
+                    </div>
+                    <!-- Grid column -->
+                </div>
+                <!-- Grid row -->
+            </div>
+        </section>
+        <!-- Section: Links  -->
+    </footer>
+    <!-- Footer -->
 </body>
 </html>
