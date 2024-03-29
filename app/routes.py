@@ -21,8 +21,6 @@ main = Blueprint('main', __name__)
 @main.route('/')
 def index():
     courses = Course.query.all()  
-    print("Courses")
-    print(courses)
     return render_template('index.html', courses=courses)
 
 

@@ -1,24 +1,67 @@
 body {
-    display: flex;
-    flex-direction: row;
-    height: 100vh;
     margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
-
-#viewerContainer, #chatContainer {
-    flex: 1;
-    overflow: auto;
-}
-
-#viewerContainer {
-    border-right: 1px solid #ccc;
-}
-
-.fullScreen {
+#pdf-viewer {
     position: fixed;
-    top: 0;
+    top: 56px; /* Adjusted to push down below the navbar */
     left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 9999;
+    width: calc(50% - 5px); /* Adjust width to create a smaller gap */
+    height: calc(100% - 56px); /* Adjust height to account for the navbar */
+    overflow: auto;
+    padding: 20px 20px; /* Add padding on all sides */
+    display: flex;
+    flex-direction: column;
+    border: 2px solid black; /* Add border */
 }
+.chat-container {
+    position: fixed;
+    top: 56px; /* Adjusted to push down below the navbar */
+    right: 0;
+    width: calc(50% - 5px); /* Adjust width to create a smaller gap */
+    height: calc(100% - 56px); /* Adjust height to account for the navbar */
+    overflow: hidden;
+    background-color: #f1f1f1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 20px 20px; /* Add padding on all sides */
+    border: 2px solid black;
+    
+}
+.chat-messages {
+    overflow-y: auto;
+}
+canvas {
+    width: 100% !important;
+    height: auto !important;
+}
+/* Chat messages styling */
+.message {
+    padding: 10px 20px;
+    border-radius: 20px;
+    margin: 5px;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.user-question {
+    background-color: #007bff;
+    color: white;
+    margin-left: auto;
+    margin-right: 10px;
+    width: auto;
+    text-align: left;
+}
+
+.chatbot-answer {
+    background-color: #dddddd;
+    color: black;
+    margin-left: 10px;
+    margin-right: auto;
+    text-align: left;
+}
+

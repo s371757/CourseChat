@@ -1,0 +1,16 @@
+.pdf-list {
+    list-style: none;
+    padding: 0;
+}
+.pdf-item {
+    margin-bottom: 10px;
+}
+.pdf-link {
+    text-decoration: none;
+    color: #333;
+}
+.pdf-icon {
+    width: 20px;
+    vertical-align: middle;
+    margin-right: 10px;
+}

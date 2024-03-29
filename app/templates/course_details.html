@@ -5,28 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ course.title }} - Course Details</title>
     <link rel="icon" href="/static/images/favicon.ico">
-    <style>
-        .pdf-list {
-            list-style: none;
-            padding: 0;
-        }
-        .pdf-item {
-            margin-bottom: 10px;
-        }
-        .pdf-link {
-            text-decoration: none;
-            color: #333;
-        }
-        .pdf-icon {
-            width: 20px;
-            vertical-align: middle;
-            margin-right: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="../static/css/course.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Bootstrap JS and jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="{{ url_for('main.logout') }}">CourseChat</a>
+        <div class="navbar-nav ml-auto">
+            <a class="nav-item nav-link" href="{{ url_for('main.logout') }}">Back</a>
+        </div>
+    </nav>
+    </br>
+    <div class="container mt-5">
+
     <h1>{{ course.title }}</h1>
+    </br>
     <h2>Available Scripts</h2>
+    </br>
     {% if pdfs %}
         <ul class="pdf-list">
             {% for pdf in pdfs %}
@@ -41,5 +40,6 @@
     {% else %}
         <p>No PDFs available yet.</p>
     {% endif %}
+    </div>
 </body>
 </html>

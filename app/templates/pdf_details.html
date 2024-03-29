@@ -5,95 +5,46 @@
     <title>PDF Viewer</title>
     <link rel="icon" href="/static/images/favicon.ico">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/pdf.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-        #pdf-viewer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 50%;
-            height: 100%;
-            overflow: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-        .chat-container {
-            position: fixed;
-            bottom: 0;
-            right: 0;
-            width: 49%;
-            height: 100vh;
-            overflow: hidden;
-            background-color: #f1f1f1;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end; /* Ensure chat input is at the bottom */
-        }
-        .chat-messages {
-            overflow-y: auto;
-        }
-        canvas {
-            width: 100% !important;
-            height: auto !important;
-        }
-        /* Chat messages styling */
-        .message {
-            padding: 10px 20px;
-            border-radius: 20px;
-            margin: 5px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-
-        .user-question {
-            background-color: #007bff;
-            color: white;
-            margin-left: auto;
-            margin-right: 10px;
-            width: auto;
-            text-align: left;
-        }
-
-        .chatbot-answer {
-            background-color: #dddddd;
-            color: black;
-            margin-left: 10px;
-            margin-right: auto;
-            text-align: left;
-        }
-
-    </style>
 </head>
 <body>
-    <div id="pdf-viewer"></div>
-    <div class="chat-container" style="padding: 20px;">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-8 offset-md-2">
-                    <div class="card-body">
-                        <div id="chat-messages" class="mb-3 chat-messages"></div>
-                        <form id="chat-form">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="message-input" placeholder="Type your message...">
-                                <div class="input-group-append">
-                                    <button type="button" class="btn btn-primary" id="send-button">Send</button>
-                                </div>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="{{ url_for('main.logout') }}">CourseChat</a>
+        <div class="navbar-nav ml-auto">
+            <a class="nav-item nav-link" href="{{ url_for('main.logout') }}">Back</a>
+        </div>
+    </nav>
+    </br>
+    <div class="big-container">
+        <div class="pdf-viewer-container">
+            <div id="pdf-viewer"></div>
+        </div>
+        <div class="chat-container-outer">
+            <div class="chat-container" style="padding: 20px;">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-8 offset-md-2">
+                            <div class="card-body">
+                                <div id="chat-messages" class="mb-3 chat-messages"></div>
+                                <form id="chat-form">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="message-input" placeholder="Type your message...">
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-primary" id="send-button">Send</button>
+                                        </div>
+                                    </div>
+                                </form>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </div>    
         </div>
     </div>
+    </body>
+    </body>
     <script>
         var pdf_data_base64 = "{{ pdf_data_base64 }}"; // Placeholder for your base64 PDF data
         var pdfData = atob(pdf_data_base64);

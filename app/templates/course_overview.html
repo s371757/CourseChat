@@ -13,6 +13,13 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="{{ url_for('main.logout') }}">CourseChat</a>
+        <div class="navbar-nav ml-auto">
+            <a class="nav-item nav-link" href="{{ url_for('main.admin') }}">Back</a>
+        </div>
+    </nav>
+    </br>
     <div class="container mt-5">
         <h2 class="mb-4">{{ course.title }} -- Overview</h2>
         <p>Here you can explore questions and answers related to each document.</p>
