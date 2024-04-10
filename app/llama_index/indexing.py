@@ -21,6 +21,7 @@ from llama_index.core.ingestion import IngestionPipeline
 from flask import current_app
 from ..utils import set_api_key
 from ..db.models import Course, Pdf
+import time
 
 transformations = [
     SentenceSplitter(),
@@ -43,11 +44,12 @@ def create_index(course_id: str, pdf_id: str, pdf_data, api_key: str, new_course
             clear_data()
             load_pdf_to_data(pdf_data)
             document = load_documents()
-            if new_course:
-                course_index = create_course_index(course_id, document)
+            #if new_course:
+            #    course_index = create_course_index(course_id, document)
             pdf_index = create_pdf_index(pdf_id, document)
-            course_index = add_to_course_index(course_id, document, pdf_index)
-            return course_index, pdf_index
+            #course_index = add_to_course_index(course_id, document, pdf_index)
+            #return course_index, pdf_index
+            return pdf_index
     except Exception as e:
         print(f"Error in create_index: {e}")
 
@@ -75,16 +77,19 @@ def create_course_index(course_id: str, documents):
 
 def create_pdf_index(pdf_id: str, documents):
     print(f"Creating index for pdf ID {pdf_id}")
-    storage_context = prepare_storage("Pdf" + str(pdf_id))
-    index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
-    return index
+    try: 
+        storage_context = prepare_storage("Pdf" + str(pdf_id))
+        index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
+        return index
+    except Exception as e:
+        print(f"Error creating pdf index: {e}")
+        return None
 
 def add_to_course_index(course_id: str, document, pdf_index: VectorStoreIndex):#TODO: add adding of meta-data
     try: 
-        documents = load_documents()
-        course_index = load_index(course_id)
-        for document in documents:
-            course_index.insert(document) 
+        index_name = "Kurs" + str(course_id)
+        course_index = load_index(index_name)
+        course_index.insert(document) 
         print("Successfully added to index")
         return course_index
     except Exception as e:
@@ -135,15 +140,21 @@ def load_all_pdfs_of_course(course_id: str):
     return pdfs
 
 def load_index(indexname: str) -> VectorStoreIndex:    
-    db = chromadb.PersistentClient(path="./index_db")
-    chroma_collection = db.get_or_create_collection(indexname)
-    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-    storage_context = StorageContext.from_defaults(vector_store=vector_store)
-    index = VectorStoreIndex.from_vector_store(
-        vector_store, storage_context=storage_context
-    )
-    print(f"Index loaded for ID {id}")
-    return index
+    try: 
+        db = chromadb.PersistentClient(path="./index_db")
+        chroma_collection = db.get_or_create_collection(indexname)
+        vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+        storage_context = StorageContext.from_defaults(vector_store=vector_store)
+        index = VectorStoreIndex.from_vector_store(
+            vector_store, storage_context=storage_context
+        )
+        print(f"Index loaded for ID {index_name}")
+        return index
+    except Exception as e:
+        current_app.logger.error(f"Error loading index: {e}")
+        if indexname.startswith("Kurs"):
+            course_id = indexname[4:]
+            create_course_index(course_id, load_all_pdfs_of_course(course_id))
 
 def prepare_storage(index_name: str):
     # initialize client, setting path to save data
@@ -156,15 +167,20 @@ def prepare_storage(index_name: str):
     return storage_context
 
 def delete_course_index(course_id, pdfs):
-    db = chromadb.PersistentClient(path="./index_db")
-    course_id = "Kurs" + str(course_id)
-    chroma_collection = db.get_or_create_collection(course_id)
-    chroma_collection.delete(ids=course_id)
-    for pdf in pdfs:
-        delete_pdf_index(pdf.id)
+    try: 
+        db = chromadb.PersistentClient(path="./index_db")
+        index_name = "Kurs" + str(course_id)
+        chroma_collection = db.get_or_create_collection(index_name)
+        chroma_collection.delete(ids=course_id)
+        for pdf in pdfs:
+            delete_pdf_index(pdf.id)
+    except Exception as e:
+        current_app.logger.error(f"Error deleting course index: {e}")
 
+    
 def delete_pdf_index(pdf_id): 
     db = chromadb.PersistentClient(path="./index_db")
-    index_id = "Pdf" + str(id)
-    chroma_collection = db.get_or_create_collection(index_id)
-    chroma_collection.delete(ids=pdf_id)
+    index_name = "Pdf" + str(pdf_id)
+    chroma_collection = db.get_or_create_collection(index_name)
+    for doc in chroma_collection:
+        chroma_collection.delete(ids=[doc["ids"][0]])

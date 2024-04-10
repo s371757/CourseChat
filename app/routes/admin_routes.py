@@ -122,8 +122,7 @@ def delete_course():
 @admin.route('/upload_pdf', methods=['POST'])
 @login_required
 def upload_pdf():
-    user_id = session.get('user_id')
-    check_superadmin(user_id)
+    print("Entered upload_pdf function")
     try:
         if 'pdf' not in request.files:
             return redirect(url_for(ADMIN_URL))
@@ -138,8 +137,10 @@ def upload_pdf():
             new_pdf = Pdf(title=file.filename, data=pdf_data, course_id=course_id)
             db.session.add(new_pdf)
             db.session.commit()
+            print(f"PDF uploaded successfully for course ID: {course_id}")
             api_key = Course.query.get(course_id).api_key
-            new_course = new_course(course_id)
+            new_course = check_new_course(course_id)
+            print(f"New course created: {new_course}")
             create_index(course_id, pdf_id, pdf_data, api_key, new_course)
             flash('PDF uploaded successfully', 'success')
             return redirect(url_for(ADMIN_URL))
@@ -164,9 +165,7 @@ def delete_pdf():
 @admin.route('/get_pdfs/<int:course_id>', methods=['GET'], strict_slashes=False)
 @login_required
 def get_pdfs(course_id):
-    print("Entered get_pdfs")
     pdfs = Pdf.query.filter_by(course_id=course_id).all()
-    print(f"PDFs: {pdfs}")
     pdfs_list = [(pdf.id, pdf.title) for pdf in pdfs]
     return jsonify(pdfs_list)
 
@@ -229,7 +228,7 @@ def get_pdf_data_from_db(pdf_id):
     return pdf.data if pdf else None
 
 
-def new_course(course_id):
+def check_new_course(course_id):
     num_pdfs_of_course = Pdf.query.filter_by(course_id=course_id).count()
     if num_pdfs_of_course == 0: 
         new_course = True
