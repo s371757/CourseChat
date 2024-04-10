@@ -42,7 +42,7 @@
         <h2>Available Courses</h2>
         <div class="list-group">
             {% for course in courses %}
-                <a href="{{ url_for('main.course_details', course_id=course.id) }}" class="list-group-item list-group-item-action">
+                <a href="{{ url_for('user.course_details', course_id=course.id) }}" class="list-group-item list-group-item-action">
                     {{ course.title }}
                 </a>
             {% else %}

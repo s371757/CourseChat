@@ -1,7 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
-from . import db
+from .db_setup import db
 from werkzeug.security import generate_password_hash, check_password_hash
 
+
+__author__ = "Julia Wenkmann"
 #Database models
 class University(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -64,3 +66,4 @@ class User(db.Model):
     def get_id(self):
         """Return the user id as a unicode string."""
         return str(self.id)
+    

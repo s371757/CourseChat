@@ -12,10 +12,11 @@ body {
     width: calc(50% - 5px); /* Adjust width to create a smaller gap */
     height: calc(100% - 56px); /* Adjust height to account for the navbar */
     overflow: auto;
-    padding: 20px 20px; /* Add padding on all sides */
+    padding: 20px 20px;
     display: flex;
     flex-direction: column;
-    border: 2px solid black; /* Add border */
+    border: 2px solid black;
+    z-index: 0; 
 }
 .chat-container {
     position: fixed;
@@ -28,8 +29,9 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 20px 20px; /* Add padding on all sides */
+    padding: 20px 20px;
     border: 2px solid black;
+    z-index: 0; 
     
 }
 .chat-messages {
@@ -65,3 +67,31 @@ canvas {
     text-align: left;
 }
 
+/* Adjust the dropdown menu width */
+.dropdown-menu {
+    max-height: 200px; /* Set a maximum height for the dropdown menu */
+    overflow-y: auto; /* Enable vertical scrolling if needed */
+    min-width: auto; /* Reset min-width to allow the menu to expand */
+    width: max-content; /* Set the width to expand based on content */
+}
+
+
+/* Adjust the dropdown button */
+.dropdown-toggle {
+    width: 100%; /* Ensure the dropdown button spans the full width */
+}
+
+/* Adjust the navbar items */
+.navbar-nav .nav-link {
+    width: 100%; /* Ensure the navbar items span the full width */
+    text-align: center; /* Center-align the text */
+}
+
+
+.navbar {
+    position: fixed; /* Ensure the navbar remains fixed at the top */
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100; /* Ensure the navbar appears in front of other content */
+}

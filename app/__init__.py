@@ -1,14 +1,14 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-from flask_migrate import Migrate
 import secrets
 from flask_cors import CORS
+from .routes.admin_routes import admin
+from .routes.user_routes import user
+from .routes.main_routes import main
+from .db.db_setup import init_db
 
-# Initialize Flask extensions
-db = SQLAlchemy()
-login_manager = LoginManager()
-
+__author__ = "Julia Wenkmann"
 
 def create_app():
 
@@ -18,23 +18,10 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # Initialize extensions with the app
-    db.init_app(app)
-    migrate = Migrate(app, db)
-    login_manager.init_app(app)
-    login_manager.login_view = 'main.login'  # Specify the route for your login page
+    init_db(app)
     CORS(app)
-
-    # Import and register blueprints
-    from .routes import main as main_blueprint
-    app.register_blueprint(main_blueprint)
-
-    # Import and register other blueprints as needed
-    # from .auth import auth as auth_blueprint
-    # app.register_blueprint(auth_blueprint)
+    app.register_blueprint(admin, url_prefix='/admin')
+    app.register_blueprint(user)
+    app.register_blueprint(main)
 
     return app
-
-@login_manager.user_loader
-def load_user(user_id):
-    from .models import User  # Import here to avoid circular import issues
-    return User.query.get(int(user_id))

@@ -27,7 +27,7 @@
                 <h3>Your Courses</h3>
                 <div class="list-group">
                     {% for course in courses %}
-                    <a href="{{ url_for('main.course_overview', course_id=course.id) }}" class="list-group-item list-group-item-action">
+                    <a href="{{ url_for('admin.course_logging', course_id=course.id) }}" class="list-group-item list-group-item-action">
                         {{ course.title }}
                     </a>                    
                     {% else %}
@@ -39,7 +39,7 @@
         </div>
 
         <h2 class="mb-4">Add a Course</h2>
-        <form action="{{ url_for('main.add_course') }}" method="post">
+        <form action="{{ url_for('admin.add_course') }}" method="post">
             <div class="form-group">
                 <label for="title">Course Title</label>
                 <input type="text" class="form-control" id="title" name="title" required>
@@ -53,7 +53,7 @@
         </form>
         <br/>
         <h2 class="mt-4">Upload PDF to Course</h2>
-        <form action="{{ url_for('main.upload_pdf') }}" method="post" enctype="multipart/form-data">
+        <form action="{{ url_for('admin.upload_pdf') }}" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="course">Select a Course</label>
                 <select class="form-control" id="course" name="course">
@@ -70,7 +70,7 @@
         </form>
         <br/>
         <h2 class="mt-4">Delete a Course</h2>
-        <form action="{{ url_for('main.delete_course') }}" method="post">
+        <form action="{{ url_for('admin.delete_course') }}" method="post">
             <div class="form-group">
                 <label for="course_del">Select a Course</label>
                 <select class="form-control" id="course_del" name="course_del">
@@ -82,7 +82,24 @@
             <button type="submit" class="btn btn-danger">Delete Course</button>
         </form>
 
-
+        <h2 class="mt-4">Delete a Pdf</h2>//TODO  fix it. 
+        <form action="{{ url_for('admin.delete_pdf') }}" method="post">
+            <div class="form-group">
+                <label for="course_del">Select a Course</label>
+                <select class="form-control" id="pdf_course_del" name="pdf_course_del" title="Select a Course">
+                    {% for course in courses %}
+                        <option value="{{ course.id }}">{{ course.title }}</option>
+                    {% endfor %}
+                </select>
+                <label for="course_del">Select a Pdf</label>
+                <select class="form-control" id="pdf_del" name="pdf_del" title="Select a PDF">
+                    {% for pdf in pdfs %}
+                        <option value="{{ pdf.id }}">{{ pdf.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-danger">Delete Pdf</button>
+        </form>
     </div>
 </body>
 </html>

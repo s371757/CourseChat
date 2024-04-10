@@ -8,12 +8,15 @@
     <link rel="stylesheet" href="../static/css/pdf.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="{{ url_for('main.logout') }}">CourseChat</a>
         <div class="navbar-nav ml-auto">
-            <a class="nav-item nav-link" href="{{ url_for('main.logout') }}">Back</a>
+            <a class="nav-item nav-link" href="{{ url_for('user.course_details', course_id=course_id) }}">Back</a>
         </div>
     </nav>
     </br>
@@ -22,10 +25,9 @@
             <div id="pdf-viewer"></div>
         </div>
         <div class="chat-container-outer">
-            <div class="chat-container" style="padding: 20px;">
+            <div class="chat-container">
                 <div class="container">
                     <div class="row">
-                        <div class="col-md-8 offset-md-2">
                             <div class="card-body">
                                 <div id="chat-messages" class="mb-3 chat-messages"></div>
                                 <form id="chat-form">
@@ -37,7 +39,6 @@
                                     </div>
                                 </form>
                             </div>
-                        </div>
                     </div>
                 </div>
             </div>    
@@ -46,7 +47,7 @@
     </body>
     </body>
     <script>
-        var pdf_data_base64 = "{{ pdf_data_base64 }}"; // Placeholder for your base64 PDF data
+        var pdf_data_base64 = "{{ pdf_data_base64 }}";
         var pdfData = atob(pdf_data_base64);
         var pdfDataBytes = new Uint8Array(pdfData.length);
         for (var i = 0; i < pdfData.length; i++) {
@@ -117,21 +118,22 @@
                 var loadingMessageId = displayLoadingMessage("Reading documents...");
                 // Make an AJAX request to your server
                 var xhr = new XMLHttpRequest();
-                xhr.open("POST", "/get_answer", true);
+                xhr.open("POST", "/get_answer_from_pdf", true);
                 xhr.setRequestHeader("Content-Type", "application/json");
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === 4) {
                         removeMessage(loadingMessageId); // Remove the loading message
                         if (xhr.status === 200) {
                             var response = JSON.parse(xhr.responseText);
-                            displayAnswer(response.answer);
+                            displayAnswerWithoutLatex(response.answer);
                         } else {
-                            displayAnswer("Sorry, there was an error processing your request."); // Handle errors
+                            displayAnswerWithoutLatex("Sorry, there was an error processing your request.");
                         }
                     }
                 };
                 var pdf_id = "{{pdf_id}}";
-                xhr.send(JSON.stringify({question: message, pdf_id: pdf_id, page_number: currentPageNumber}));
+                var api_key = "{{api_key}}";
+                xhr.send(JSON.stringify({question: message, pdf_id: pdf_id, page_number: currentPageNumber, api_key: api_key}));
 
                 // Clear the input field
                 messageInput.value = "";
@@ -175,19 +177,57 @@
             // Scroll to the latest message
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-        
-        function displayAnswer(answer) {
-            var chatMessages = document.getElementById("chat-messages");
-            // Create a div for the answer with appropriate classes
-            var answerDiv = document.createElement("div");
-            answerDiv.textContent = answer;
-            answerDiv.className = 'message chatbot-answer'; // Assign classes for styling
-            chatMessages.appendChild(answerDiv);
-                
-            // Scroll to the latest message
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-        
+
+        function displayAnswer(latexString) {
+    // Create a placeholder element for MathJax to render into
+    var placeholder = document.createElement('div');
+    placeholder.style.visibility = 'hidden'; // Hide the placeholder
+
+    // Set the LaTeX string as the content of the placeholder
+    placeholder.innerHTML = '$$' + latexString + '$$'; // Use $$ for multiline display mode
+
+    // Append the placeholder to the document body to trigger MathJax rendering
+    document.body.appendChild(placeholder);
+
+    // Wait for MathJax to finish rendering
+    MathJax.Hub.Queue(["Typeset", MathJax.Hub, placeholder]);
+
+    // After rendering, extract the rendered HTML
+    setTimeout(function() {
+        var renderedHTML = placeholder.innerHTML;
+
+        // Create a div for the answer with appropriate classes
+        var chatMessages = document.getElementById("chat-messages");
+        var answerDiv = document.createElement("div");
+        answerDiv.innerHTML = renderedHTML;
+        answerDiv.className = 'message chatbot-answer'; // Assign classes for styling
+        chatMessages.appendChild(answerDiv);
+
+        // Scroll to the latest message
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        // Remove the placeholder from the DOM
+        document.body.removeChild(placeholder);
+    }, 1000); // Adjust the delay as needed based on MathJax rendering speed
+}
+
+
+
+function displayAnswerWithoutLatex(answerHTML) {
+    var chatMessages = document.getElementById("chat-messages");
+    
+    // Create a div for the answer with appropriate classes
+    var answerDiv = document.createElement("div");
+    answerDiv.innerHTML = answerHTML; // Set innerHTML to append HTML content
+    answerDiv.className = 'message chatbot-answer'; // Assign classes for styling
+    
+    // Append the answer div to the chat messages
+    chatMessages.appendChild(answerDiv);
+    
+    // Scroll to the latest message
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
 
     
         var sendButton = document.getElementById("send-button");

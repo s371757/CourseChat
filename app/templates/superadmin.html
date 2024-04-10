@@ -21,17 +21,8 @@
     </nav>
 
     <div class="container mt-5">
-        <h2 class="mb-4">Add a University</h2>
-        <form action="{{ url_for('main.add_university') }}" method="post">
-            <div class="form-group">
-                <label for="university_name">University Name:</label>
-                <input type="text" class="form-control" id="university_name" name="university_name" required placeholder="Enter university name">
-            </div>
-            <button type="submit" class="btn btn-primary">Add University</button>
-        </form>
-        <br/>
         <h2 class="mt-4">Add a User</h2>
-        <form action="{{ url_for('main.add_user') }}" method="post" enctype="multipart/form-data">
+        <form action="{{ url_for('admin.add_user') }}" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="university">Select a University</label>
                 <select class="form-control" id="university" name="university" title="Select a University">
@@ -48,40 +39,47 @@
             </div>
             <button type="submit" class="btn btn-primary">Add User</button>
         </form>
-    </div>
-    <br/>
-    <div class="container mt-5">
-        <h2 class="mb-4">Add a Course</h2>
-        <form action="{{ url_for('main.add_course') }}" method="post">
-            <div class="form-group">
-                <label for="title">Course Title</label>
-                <input type="text" class="form-control" id="title" name="title" required>
-                <br/>
-                <label for="api_key">API Key:</label>
-                <input type="text" id="api_key" name="api_key" required>
-                <label for="course_password">Password:</label>
-                <input type="password" id="course_password" name="course_password" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Add Course</button>
-        </form>
         <br/>
-        <h2 class="mt-4">Upload PDF to Course</h2>
-        <form action="{{ url_for('main.upload_pdf') }}" method="post" enctype="multipart/form-data">
+        <h2 class="mt-4">Delete a User</h2>
+        <form action="{{ url_for('admin.delete_user') }}" method="post" enctype="multipart/form-data">
             <div class="form-group">
-                <label for="course">Select a Course</label>
-                <select class="form-control" id="course" name="course">
-                    {% for course in courses %}
-                        <option value="{{ course.id }}">{{ course.title }}</option>
+                <label for="del_user">Select a User</label>
+                <select class="form-control" id="del_user" name="del_user">
+                    {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.username}}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div class="form-group">
-                <label for="pdf">Choose a PDF file</label>
-                <input type="file" class="form-control-file" id="pdf" name="pdf" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Upload PDF</button>
+            <button type="submit" class="btn btn-danger">Delete User</button>
         </form>
+        <br/>
+        <br/>
+        <h2 class="mb-4">Add a University</h2>
+        <form action="{{ url_for('admin.add_university') }}" method="post">
+            <div class="form-group">
+                <label for="university_name">University Name:</label>
+                <input type="text" class="form-control" id="university_name" name="university_name" required placeholder="Enter university name">
+            </div>
+            <button type="submit" class="btn btn-primary">Add University</button>
+        </form>
+        <br/>
+        <h2 class="mt-4">Delete a University</h2>
+        <form action="{{ url_for('admin.delete_university') }}" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="del_university">Select a University</label>
+                <select class="form-control" id="del_university" name="del_university">
+                    {% for university in universities %}
+                        <option value="{{ university.id }}">{{ university.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-danger">Delete University</button>
+            <p>!!! Use with caution as this will also delete all users, courses, and chatentries associated with that university !!!</p>
+        </form>
+        </br>
     </div>
+    <br/>
+    <br/>
 </body>
 </html>
 

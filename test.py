@@ -13,6 +13,7 @@ import logging
 import sys
 import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
+from app.llama_index.questioning import add_course_index, ask_course
 
 def load_index(id: str) -> VectorStoreIndex:    
     courseindex = "Index" +id
@@ -96,4 +97,7 @@ def ask_pdf(pdf_id: str, question: str):
 if __name__ == "__main__":
     #add_pdf_index("1234")
     #print("Done")   
-    ask_pdf("17", "Warum Videos?")
+    #ask_pdf("17", "Warum Videos?")
+    add_course_index("1")
+    ask_course("1", "Worum geht es in diesem Kurs?")
+    print("Done")

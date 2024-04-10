@@ -30,7 +30,7 @@
         <ul class="pdf-list">
             {% for pdf in pdfs %}
                 <li class="pdf-item">
-                    <a href="{{ url_for('main.pdf_details', pdf_id=pdf.id) }}" class="pdf-link">
+                    <a href="{{ url_for('user.chat_with_pdf', pdf_id=pdf.id) }}" class="pdf-link">
                         <img src="{{ url_for('static', filename='images/pdf.png') }}" alt="PDF Icon" class="pdf-icon">
                         {{ pdf.title }}
                     </a>
@@ -40,6 +40,8 @@
     {% else %}
         <p>No PDFs available yet.</p>
     {% endif %}
+    </br>
+    <a class="btn btn-primary" href="{{ url_for('user.chat_with_course', course_id=course.id) }}">Ask questions about the whole course.</a>
     </div>
 </body>
 </html>
