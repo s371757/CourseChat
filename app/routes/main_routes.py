@@ -44,7 +44,7 @@ def login():
             session['user_id'] = user.id
             login_user(user)
             
-            # Assuming a super admin check with hardcoded username (not recommended for production)
+            #Assuming a super admin check with hardcoded username (not recommended for production)
             if user.id == 1:
                 universities = University.query.all()
                 courses = Course.query.all()

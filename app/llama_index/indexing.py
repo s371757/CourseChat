@@ -145,12 +145,11 @@ def load_index(indexname: str) -> VectorStoreIndex:
     print(f"Index loaded for ID {id}")
     return index
 
-def prepare_storage(id: str):
+def prepare_storage(index_name: str):
     # initialize client, setting path to save data
     db = chromadb.PersistentClient(path="./index_db")
     # create collection
-    index_id = "Index" + str(id)
-    chroma_collection = db.get_or_create_collection(index_id)
+    chroma_collection = db.get_or_create_collection(index_name)
     # assign chroma as the vector_store to the context
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
@@ -158,7 +157,7 @@ def prepare_storage(id: str):
 
 def delete_course_index(course_id, pdfs):
     db = chromadb.PersistentClient(path="./index_db")
-    course_id = "Index" + "Kurs" + str(course_id)
+    course_id = "Kurs" + str(course_id)
     chroma_collection = db.get_or_create_collection(course_id)
     chroma_collection.delete(ids=course_id)
     for pdf in pdfs:
@@ -166,6 +165,6 @@ def delete_course_index(course_id, pdfs):
 
 def delete_pdf_index(pdf_id): 
     db = chromadb.PersistentClient(path="./index_db")
-    index_id = "Index" + str(id)
+    index_id = "Pdf" + str(id)
     chroma_collection = db.get_or_create_collection(index_id)
     chroma_collection.delete(ids=pdf_id)

@@ -20,7 +20,7 @@ def create_app():
     # Initialize extensions with the app
     init_db(app)
     CORS(app)
-    app.register_blueprint(admin, url_prefix='/admin')
+    app.register_blueprint(admin)
     app.register_blueprint(user)
     app.register_blueprint(main)
 

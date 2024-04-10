@@ -20,7 +20,6 @@
         </div>
     </nav>
 
-
     <div class="container mt-5">
         <div class="row">
             <div class="col-12">
@@ -82,24 +81,51 @@
             <button type="submit" class="btn btn-danger">Delete Course</button>
         </form>
 
-        <h2 class="mt-4">Delete a Pdf</h2>//TODO  fix it. 
+        <h2 class="mt-4">Delete a Pdf</h2>
         <form action="{{ url_for('admin.delete_pdf') }}" method="post">
             <div class="form-group">
-                <label for="course_del">Select a Course</label>
-                <select class="form-control" id="pdf_course_del" name="pdf_course_del" title="Select a Course">
+                <label for="pdf_course_del">Select a Course</label>
+                <select class="form-control" id="pdf_course_del" name="pdf_course_del" title="Select a Course" onchange="updatePdfDropdown(this.value)">
                     {% for course in courses %}
                         <option value="{{ course.id }}">{{ course.title }}</option>
                     {% endfor %}
                 </select>
-                <label for="course_del">Select a Pdf</label>
+                <br/>
                 <select class="form-control" id="pdf_del" name="pdf_del" title="Select a PDF">
-                    {% for pdf in pdfs %}
-                        <option value="{{ pdf.id }}">{{ pdf.title }}</option>
-                    {% endfor %}
-                </select>
+                    <!-- Options will be populated dynamically -->
+                </select>                
             </div>
             <button type="submit" class="btn btn-danger">Delete Pdf</button>
         </form>
     </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+    function updatePdfDropdown(courseId) {
+        console.log("Enreded updatePdfDropdown with courseId: ", courseId);
+        $.ajax({
+            url: '/get_pdfs/' + courseId,
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                var pdfDropdown = $('#pdf_del');
+                pdfDropdown.empty(); // Clear existing options
+                $.each(response, function(index, pdf) {
+                    pdfDropdown.append($('<option>', {
+                        value: pdf[0],
+                        text: pdf[1]
+                    }));
+                });
+            },
+            error: function(xhr, status, error) {
+                console.log("Error: " + status + " " + error);
+                console.log(xhr.responseText);
+            }
+        });
+    }
+
+    updatePdfDropdown($('#pdf_course_del').val());
+    </script>
+    
 </body>
 </html>

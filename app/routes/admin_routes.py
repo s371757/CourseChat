@@ -9,33 +9,33 @@ from ..utils import allowed_file
 from ..llama_index.indexing import create_index
 from ..db.models import User, Course, Pdf, ChatEntry , University   
 from ..db.db_setup import db
+from flask import jsonify
 
 __author__ = "Julia Wenkmann"
 
 admin = Blueprint('admin', __name__)
 
-ADMIN_URL = 'admin'
-SUPERADMIN_URL = 'admin.superadmin'
+ADMIN_URL = 'admin.admin_page'
+SUPERADMIN_URL = 'admin.superadmin_page'
 
 
 
 # Routes
-@admin.route('/')
-#@login_required
+@admin.route('/admin')
+@login_required
 def admin_page():
     user_id = session.get('user_id')
     check_admin(user_id)
-    if user_id == 1:
-        universities = University.query.all()
-        courses = Course.query.all()
-        users = User.query.all()
-        return render_template('superadmin.html', universities=universities, courses = courses, users = users)
     courses = Course.query.filter_by(user_id=user_id).all()
-    return render_template('admin.html', courses=courses)
+    pdfs_by_course = {}
+    for course in courses:
+        pdfs = Pdf.query.filter_by(course_id=course.id).all()
+        pdfs_by_course[course.id] = [(pdf.id, pdf.title) for pdf in pdfs]
+    return render_template('admin.html', courses=courses, pdfs_by_course=pdfs_by_course)
 
 
 @admin.route('/superadmin')
-#@login_required
+@login_required
 def superadmin_page():
     user_id = session.get('user_id')
     check_superadmin(user_id)
@@ -46,7 +46,7 @@ def superadmin_page():
 
 
 @admin.route('/add_university', methods=['POST'])
-#@login_required
+@login_required
 def add_university():
     user_id = session.get('user_id')
     check_superadmin(user_id)
@@ -58,8 +58,9 @@ def add_university():
     else: print("Not logged in")
     return redirect(url_for(SUPERADMIN_URL))
 
+
 @admin.route('/delete_university', methods=['POST'])
-#@login_required
+@login_required
 def delete_university():
     user_id = session.get('user_id')
     check_superadmin(user_id)
@@ -68,7 +69,7 @@ def delete_university():
     return redirect(url_for(SUPERADMIN_URL))
 
 @admin.route('/add_user', methods=['POST'])
-#@login_required
+@login_required
 def add_user():
     user_id = session.get('user_id')
     check_superadmin(user_id)
@@ -80,8 +81,9 @@ def add_user():
     db.session.commit()
     return redirect(url_for(SUPERADMIN_URL))
 
+
 @admin.route('/delete_user', methods=['POST'])
-#@login_required
+@login_required
 def delete_user():
     user_id = session.get('user_id')
     check_superadmin(user_id)
@@ -89,8 +91,9 @@ def delete_user():
     delete_user_by_id(user_id_to_delete)
     return redirect(url_for(SUPERADMIN_URL))
 
+
 @admin.route('/add_course', methods=['POST'])
-#@login_required
+@login_required
 def add_course():
     user_id = session.get('user_id')
     check_admin(user_id)
@@ -105,8 +108,9 @@ def add_course():
     db.session.commit()
     return redirect(url_for(ADMIN_URL))
 
+
 @admin.route('/delete_course', methods=['POST'])
-#@login_required
+@login_required
 def delete_course():
     user_id = session.get('user_id')
     check_admin(user_id)
@@ -116,19 +120,17 @@ def delete_course():
 
 
 @admin.route('/upload_pdf', methods=['POST'])
-# @login_required
+@login_required
 def upload_pdf():
     user_id = session.get('user_id')
     check_superadmin(user_id)
     try:
         if 'pdf' not in request.files:
             return redirect(url_for(ADMIN_URL))
-
         file = request.files['pdf']
         if file.filename == '':
             flash('No selected file', 'danger')
             return redirect(url_for(ADMIN_URL))
-
         if file and allowed_file(file.filename):
             pdf_data = file.read()
             course_id = request.form['course']  
@@ -144,19 +146,29 @@ def upload_pdf():
         else:
             flash('Invalid file type', 'danger')
             return redirect(url_for(ADMIN_URL))
-
     except Exception as e:
         flash(f'An error occurred: {e}', 'danger')
         return redirect(url_for(ADMIN_URL))
 
+
 @admin.route('/delete_pdf', methods=['POST'])
-#@login_required
+@login_required
 def delete_pdf():
     user_id = session.get('user_id')
     check_admin(user_id)
     pdf_id = request.form['pdf_del'] 
     delete_pdf_by_id(pdf_id)
     return redirect(url_for(ADMIN_URL))
+
+
+@admin.route('/get_pdfs/<int:course_id>', methods=['GET'], strict_slashes=False)
+@login_required
+def get_pdfs(course_id):
+    print("Entered get_pdfs")
+    pdfs = Pdf.query.filter_by(course_id=course_id).all()
+    print(f"PDFs: {pdfs}")
+    pdfs_list = [(pdf.id, pdf.title) for pdf in pdfs]
+    return jsonify(pdfs_list)
 
 
 @admin.route('/course_logging/<int:course_id>')
@@ -170,7 +182,8 @@ def course_logging(course_id):
         abort(403)
     # Query for PDFs associated with this course
     pdfs = Pdf.query.filter_by(course_id=course_id).all()
-    return render_template('course_logging.html', course=course, pdfs=pdfs)
+    return render_template('course_chat_entries.html', course=course, pdfs=pdfs)
+
 
 @admin.route('/download-pdf-entries/<int:pdf_id>')
 def download_pdf_entries(pdf_id):
@@ -204,6 +217,7 @@ def download_pdf_entries(pdf_id):
     
 
 ########################################################Debugging############################################
+
 
 @admin.errorhandler(403)
 def forbidden(error):

@@ -52,7 +52,6 @@ def chat_with_course(course_id):
             pdf_data_base64 = base64.b64encode(pdf.data).decode('utf-8')
             pdf_data_map[pdf.id] = pdf_data_base64
             pdf_titles.append((pdf.id, pdf.title))
-            print("pdf_id: ", pdf.id, ", pdf_title: ", pdf.title)
     pdf_data_json = json.dumps(pdf_data_map)
     return render_template('chat_with_course.html', course_id=course_id, pdf_titles=pdf_titles, pdf_data_json=pdf_data_json, api_key=api_key)
 

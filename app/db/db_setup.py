@@ -10,7 +10,7 @@ def init_db(app):
     db.init_app(app)
     Migrate(app, db)
     login_manager.init_app(app)
-    login_manager.login_view = 'login.login'
+    login_manager.login_view = 'main.login'
 
 
 @login_manager.user_loader
