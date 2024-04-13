@@ -95,3 +95,11 @@ canvas {
     right: 0;
     z-index: 100; /* Ensure the navbar appears in front of other content */
 }
+
+
+#ask-a-person-button {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 10000;
+}

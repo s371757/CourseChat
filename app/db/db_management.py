@@ -47,7 +47,8 @@ def delete_course_by_id(course_id):
         for pdf in pdfs:
             delete_pdf_by_id(pdf.id)
         delete_course_index(course_id, pdfs)
-        db.session.delete(course)
+        db.session.delete(course)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+                                                                                                                                                                                                                                                                                                                                                                         
         db.session.commit()
 
 def delete_pdf_by_id(pdf_id):

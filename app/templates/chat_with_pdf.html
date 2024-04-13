@@ -25,27 +25,32 @@
             <div id="pdf-viewer"></div>
         </div>
         <div class="chat-container-outer">
+            
             <div class="chat-container">
+                <button class="btn btn-primary btn-sm" id="ask-a-person-button" type="button">Ask A Person</button>
                 <div class="container">
                     <div class="row">
-                            <div class="card-body">
-                                <div id="chat-messages" class="mb-3 chat-messages"></div>
-                                <form id="chat-form">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" id="message-input" placeholder="Type your message...">
-                                        <div class="input-group-append">
-                                            <button type="button" class="btn btn-primary" id="send-button">Send</button>
-                                        </div>
+                        <div class="card-body">
+                            <div id="chat-messages" class="mb-3 chat-messages"></div>
+                            <form id="chat-form">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="message-input" placeholder="Type your message...">
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-primary" id="send-button">Send</button>
                                     </div>
-                                </form>
-                            </div>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
-            </div>    
+            </div>
         </div>
     </div>
     </body>
     </body>
+    <!-- Include Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         var pdf_data_base64 = "{{ pdf_data_base64 }}";
         var pdfData = atob(pdf_data_base64);
@@ -99,12 +104,6 @@
         pdfViewer.addEventListener('scroll', updateCurrentPageNumber);
 
 
-
-    </script>
-    <!-- Include Bootstrap JS and jQuery -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
         function sendMessage() {
             console.log("Sending message...");
             var messageInput = document.getElementById("message-input");
@@ -179,55 +178,65 @@
         }
 
         function displayAnswer(latexString) {
-    // Create a placeholder element for MathJax to render into
-    var placeholder = document.createElement('div');
-    placeholder.style.visibility = 'hidden'; // Hide the placeholder
+            // Create a placeholder element for MathJax to render into
+            var placeholder = document.createElement('div');
+            placeholder.style.visibility = 'hidden'; // Hide the placeholder
 
-    // Set the LaTeX string as the content of the placeholder
-    placeholder.innerHTML = '$$' + latexString + '$$'; // Use $$ for multiline display mode
+            // Set the LaTeX string as the content of the placeholder
+            placeholder.innerHTML = '$$' + latexString + '$$'; // Use $$ for multiline display mode
 
-    // Append the placeholder to the document body to trigger MathJax rendering
-    document.body.appendChild(placeholder);
+            // Append the placeholder to the document body to trigger MathJax rendering
+            document.body.appendChild(placeholder);
 
-    // Wait for MathJax to finish rendering
-    MathJax.Hub.Queue(["Typeset", MathJax.Hub, placeholder]);
+            // Wait for MathJax to finish rendering
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, placeholder]);
 
-    // After rendering, extract the rendered HTML
-    setTimeout(function() {
-        var renderedHTML = placeholder.innerHTML;
+            // After rendering, extract the rendered HTML
+            setTimeout(function() {
+                var renderedHTML = placeholder.innerHTML;
+            
+                // Create a div for the answer with appropriate classes
+                var chatMessages = document.getElementById("chat-messages");
+                var answerDiv = document.createElement("div");
+                answerDiv.innerHTML = renderedHTML;
+                answerDiv.className = 'message chatbot-answer'; // Assign classes for styling
+                chatMessages.appendChild(answerDiv);
+            
+                // Scroll to the latest message
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+                // Remove the placeholder from the DOM
+                document.body.removeChild(placeholder);
+            }, 1000); // Adjust the delay as needed based on MathJax rendering speed
+        }
 
-        // Create a div for the answer with appropriate classes
-        var chatMessages = document.getElementById("chat-messages");
-        var answerDiv = document.createElement("div");
-        answerDiv.innerHTML = renderedHTML;
-        answerDiv.className = 'message chatbot-answer'; // Assign classes for styling
-        chatMessages.appendChild(answerDiv);
-
-        // Scroll to the latest message
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-
-        // Remove the placeholder from the DOM
-        document.body.removeChild(placeholder);
-    }, 1000); // Adjust the delay as needed based on MathJax rendering speed
-}
 
 
+        function displayAnswerWithoutLatex(answerHTML) {
+            var chatMessages = document.getElementById("chat-messages");
+            
+            // Create a div for the answer with appropriate classes
+            var answerDiv = document.createElement("div");
+            answerDiv.innerHTML = answerHTML; // Set innerHTML to append HTML content
+            answerDiv.className = 'message chatbot-answer'; // Assign classes for styling
+            
+            // Append the answer div to the chat messages
+            chatMessages.appendChild(answerDiv);
+            
+            // Scroll to the latest message
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
 
-function displayAnswerWithoutLatex(answerHTML) {
-    var chatMessages = document.getElementById("chat-messages");
-    
-    // Create a div for the answer with appropriate classes
-    var answerDiv = document.createElement("div");
-    answerDiv.innerHTML = answerHTML; // Set innerHTML to append HTML content
-    answerDiv.className = 'message chatbot-answer'; // Assign classes for styling
-    
-    // Append the answer div to the chat messages
-    chatMessages.appendChild(answerDiv);
-    
-    // Scroll to the latest message
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
+        function sendMessageToHuman() {
+            var message = messageInput.value.trim();
+            if (message !== "") {
+                // Display the loading message
+                var popupText = "This is some editable text";
+                var popupWindow = window.open("", "Popup Window", "width=400,height=300");
+                popupWindow.document.write("<html><body><textarea id='popup-textarea' style='width: 100%; height: 100%;'>" + popupText + "</textarea></body></html>");
+                popupWindow.document.write("<button onclick='log_question_for_person()'>Ask Question</button>");
+            }
+        }
 
     
         var sendButton = document.getElementById("send-button");
@@ -242,6 +251,12 @@ function displayAnswerWithoutLatex(answerHTML) {
                 event.preventDefault(); // Prevent the default form submission
                 sendMessage();
             }
+        });
+
+        var askAPersonButton = document.getElementById("ask-a-person-button");
+        askAPersonButton.addEventListener("click", function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            sendMessageToHuman();
         });
 
     </script>

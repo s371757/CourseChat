@@ -139,7 +139,7 @@ def load_all_pdfs_of_course(course_id: str):
     pdfs = Pdf.query.filter_by(course_id=course_id).all()
     return pdfs
 
-def load_index(indexname: str) -> VectorStoreIndex:    
+def load_index(index_name: str) -> VectorStoreIndex:    
     try: 
         db = chromadb.PersistentClient(path="./index_db")
         chroma_collection = db.get_or_create_collection(indexname)
@@ -152,8 +152,8 @@ def load_index(indexname: str) -> VectorStoreIndex:
         return index
     except Exception as e:
         current_app.logger.error(f"Error loading index: {e}")
-        if indexname.startswith("Kurs"):
-            course_id = indexname[4:]
+        if index_name.startswith("Kurs"):
+            course_id = index_name[4:]
             create_course_index(course_id, load_all_pdfs_of_course(course_id))
 
 def prepare_storage(index_name: str):
