@@ -10,8 +10,8 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
 app = create_app()
 
-MODEL_TYPE = "ollama"
 
+MODEL_TYPE = "ollama"
 
 def set_model(type: str):
     if type == "ollama":

@@ -8,4 +8,3 @@
     - flask db upgrade
 
 3. Run application: run.py 
-   
